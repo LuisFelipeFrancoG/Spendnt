@@ -4,7 +4,12 @@
     <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>Spendn_t.Shared</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Spendn-t.API\Spendn-t.API.csproj" />
+    <ProjectReference Include="..\Spendn-t.WEB\Spendn-t.WEB.csproj" />
+  </ItemGroup>
 
 </Project>
