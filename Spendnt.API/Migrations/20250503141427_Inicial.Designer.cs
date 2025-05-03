@@ -11,7 +11,7 @@ using Spendnt.API.Data;
 namespace Spendnt.API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250409182145_Inicial")]
+    [Migration("20250503141427_Inicial")]
     partial class Inicial
     {
         /// <inheritdoc />

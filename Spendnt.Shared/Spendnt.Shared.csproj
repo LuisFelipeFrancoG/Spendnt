@@ -6,4 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Spendnt.WEB\Spendnt.WEB.csproj" />
+  </ItemGroup>
+
 </Project>
