@@ -6,10 +6,11 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace Spendnt.Shared.Entities
 {
-    public class Usuario
+    public class User:IdentityUser
     {
         public int Id { get; set; }
 
@@ -33,6 +34,6 @@ namespace Spendnt.Shared.Entities
         [Display(Name = "Contraseña")]
         [Required]
         [MaxLength(50)]
-        public string ContraseñaHash { get; set; }
+        public string Contraseña { get; set; }
     }
 }
