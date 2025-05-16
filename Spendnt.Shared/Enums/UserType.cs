@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Spendnt.Shared.Enums
 {
-    internal enum UserType
+    public enum UserType
     {
         Admin,
         User

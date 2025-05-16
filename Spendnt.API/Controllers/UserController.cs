@@ -7,11 +7,11 @@ namespace Spendnt.API.Controllers
 {
     [ApiController]
     [Route("/api/usuarios")]
-    public class UsuariosController:ControllerBase
+    public class UserController:ControllerBase
     {
         private readonly DataContext _context;
 
-        public UsuariosController(DataContext context)
+        public UserController(DataContext context)
         {
 
             _context = context;

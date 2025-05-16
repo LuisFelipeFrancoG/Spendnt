@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Spendnt.Shared.Enums;
 
 namespace Spendnt.Shared.Entities
 {
@@ -35,5 +36,6 @@ namespace Spendnt.Shared.Entities
         [Required]
         [MaxLength(50)]
         public string Contraseña { get; set; }
+        public UserType UserType { get; set; }
     }
 }
