@@ -12,7 +12,13 @@ namespace Spendnt.API.Data
 
         }
 
-        
+        public DbSet<Saldo> Saldos { get; set; }
+
+        public DbSet<Ingresos> Ingresos { get; set; }
+
+        public DbSet<Egresos> Egresos { get; set; }
+
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
