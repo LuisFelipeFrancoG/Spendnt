@@ -37,5 +37,11 @@ namespace Spendnt.Shared.Entities
         [MaxLength(50)]
         public string Contraseña { get; set; }
         public UserType UserType { get; set; }
+
+        [JsonIgnore]
+        public Saldo Saldo { get; set; }
+
+        public ICollection<Ingresos> Ingresos { get; set; }
+        public ICollection<Egresos> Egresos { get; set; }
     }
 }
