@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,10 @@ namespace Spendnt.Shared.Entities
 {
     public class Saldo
     {
-        public int Id { get; set; }
+        [Key]
+        [ForeignKey("User")]
+        [JsonIgnore]
+        public string UserId { get; set; }
 
         [JsonIgnore]
         public User User { get; set; }

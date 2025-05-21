@@ -12,8 +12,8 @@ using Spendnt.API.Data;
 namespace Spendnt.API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250516151903_Users")]
-    partial class Users
+    [Migration("20250521115107_inicial")]
+    partial class inicial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -158,6 +158,86 @@ namespace Spendnt.API.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Spendnt.Shared.Entities.Egresos", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("Egreso")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SaldoUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaldoUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Egresos");
+                });
+
+            modelBuilder.Entity("Spendnt.Shared.Entities.Ingresos", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Ingreso")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("SaldoUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaldoUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Ingresos");
+                });
+
+            modelBuilder.Entity("Spendnt.Shared.Entities.Saldo", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("Saldos");
+                });
+
             modelBuilder.Entity("Spendnt.Shared.Entities.User", b =>
                 {
                     b.Property<string>("Id")
@@ -291,6 +371,63 @@ namespace Spendnt.API.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Spendnt.Shared.Entities.Egresos", b =>
+                {
+                    b.HasOne("Spendnt.Shared.Entities.Saldo", "Saldo")
+                        .WithMany("Egresos")
+                        .HasForeignKey("SaldoUserId");
+
+                    b.HasOne("Spendnt.Shared.Entities.User", "User")
+                        .WithMany("Egresos")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Saldo");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Spendnt.Shared.Entities.Ingresos", b =>
+                {
+                    b.HasOne("Spendnt.Shared.Entities.Saldo", "Saldo")
+                        .WithMany("Ingresos")
+                        .HasForeignKey("SaldoUserId");
+
+                    b.HasOne("Spendnt.Shared.Entities.User", "User")
+                        .WithMany("Ingresos")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Saldo");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Spendnt.Shared.Entities.Saldo", b =>
+                {
+                    b.HasOne("Spendnt.Shared.Entities.User", "User")
+                        .WithOne("Saldo")
+                        .HasForeignKey("Spendnt.Shared.Entities.Saldo", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Spendnt.Shared.Entities.Saldo", b =>
+                {
+                    b.Navigation("Egresos");
+
+                    b.Navigation("Ingresos");
+                });
+
+            modelBuilder.Entity("Spendnt.Shared.Entities.User", b =>
+                {
+                    b.Navigation("Egresos");
+
+                    b.Navigation("Ingresos");
+
+                    b.Navigation("Saldo");
                 });
 #pragma warning restore 612, 618
         }
