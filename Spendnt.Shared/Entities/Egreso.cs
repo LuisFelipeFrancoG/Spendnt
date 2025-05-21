@@ -13,14 +13,14 @@ namespace Spendnt.Shared.Entities
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        [Display(Name = "Categoría")]
-        public string Categoria { get; set; }
-
-        [Required]
         [Display(Name = "Egreso")]
         [Range(0.01, double.MaxValue)]
         public decimal Egreso { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        [Display(Name = "Categoría")]
+        public string Categoria { get; set; }
 
         [Required]
         [Display(Name = "Fecha")]

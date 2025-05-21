@@ -13,8 +13,6 @@ namespace Spendnt.Shared.Entities
 {
     public class User:IdentityUser
     {
-        public int Id { get; set; }
-
         [Display(Name = "Nombre")]
         [Required]
         [MaxLength(50)]
