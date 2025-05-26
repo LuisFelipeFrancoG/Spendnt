@@ -12,25 +12,25 @@ namespace Spendnt.Shared.Entities
     {
         public int Id { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "El monto del egreso es requerido.")]
         [Display(Name = "Egreso")]
-        [Range(0.01, double.MaxValue)]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El monto del egreso debe ser mayor que cero.")]
         public decimal Egreso { get; set; }
 
-        [Required]
-        [MaxLength(100)]
-        [Display(Name = "Categoría")]
-        public string Categoria { get; set; }
+        [Required(ErrorMessage = "La categoría es obligatoria.")]
+        public int CategoriaId { get; set; }
 
-        [Required]
+        [JsonIgnore]
+        public Categoria Categoria { get; set; }
+
+        [Required(ErrorMessage = "La fecha es requerida.")]
         [Display(Name = "Fecha")]
-        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Fecha { get; set; }
+
+        [Required(ErrorMessage = "El saldo es obligatorio.")]
+        public int SaldoId { get; set; }
 
         [JsonIgnore]
         public Saldo Saldo { get; set; }
-
-        [JsonIgnore]
-        public User User { get; set; }
     }
 }

@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Spendnt.Shared.Entities;
 
 
 namespace Spendnt.API.Data
 {
-    public class DataContext : IdentityDbContext <User>
+    public class DataContext : DbContext
     {
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {
@@ -18,6 +19,11 @@ namespace Spendnt.API.Data
 
         public DbSet<Egresos> Egresos { get; set; }
 
+        public DbSet<Categoria> Categorias { get; set; }
+        public DbSet<Historial> Historiales { get; set; }
+        public DbSet<RecordatorioGasto> RecordatoriosGasto { get; set; }
+
+
 
 
 
@@ -25,18 +31,22 @@ namespace Spendnt.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<User>()
-            .HasOne(u => u.Saldo)
-            .WithOne(s => s.User)
-            .HasForeignKey<Saldo>(s => s.UserId);
-
             modelBuilder.Entity<Ingresos>()
-            .Property(i => i.Ingreso)
-            .HasPrecision(18, 2);  // 18 dígitos en total, 2 decimales
+                .Property(i => i.Ingreso)
+                .HasPrecision(18, 2);
 
             modelBuilder.Entity<Egresos>()
-            .Property(e => e.Egreso)
-            .HasPrecision(18, 2);
+                .Property(e => e.Egreso)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Historial>()
+                .Property(h => h.Monto)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<RecordatorioGasto>()
+                .Property(r => r.MontoEstimado)
+                .HasPrecision(18, 2);
+
         }
     }
 }

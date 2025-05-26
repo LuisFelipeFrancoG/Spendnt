@@ -1,76 +1,55 @@
-using Microsoft.AspNetCore.Identity;
+
+using Spendnt.API;
 using Microsoft.EntityFrameworkCore;
 using Spendnt.API.Data;
-using Spendnt.API.Helpers;
-using Spendnt.Shared.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// Agrega los controladores y Swagger
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-//builder.Services.AddOpenApi();
-
-//Inyecciones de dependencias
- 
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "Veterinary API",
+        Title = "Spend'nt API",
         Version = "v1"
     });
 });
 
-builder.Services.AddDbContext<DataContext>(x => x.UseSqlServer("name=DefaultConnection"));
+// Inyecta el DataContext con cadena de conexión
+builder.Services.AddDbContext<DataContext>(x => x.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Inyecta el servicio SeedDb
 builder.Services.AddTransient<SeedDB>();
-
-builder.Services.AddIdentity<User, IdentityRole>(x =>
-{
-    x.User.RequireUniqueEmail = true;
-    x.Password.RequireDigit = false;
-    x.Password.RequiredUniqueChars = 0;
-    x.Password.RequireLowercase = false;
-    x.Password.RequireNonAlphanumeric = false;
-    x.Password.RequireUppercase = false;
-})
-    .AddEntityFrameworkStores<DataContext>()
-    .AddDefaultTokenProviders();
-
-builder.Services.AddScoped<IUserHelper, UserHelper>();
 
 var app = builder.Build();
 
-SeedData(app);
+app.UseCors(x => x
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .SetIsOriginAllowed(origin => true)
+    .AllowCredentials());
 
-void SeedData(WebApplication app)
+
+// Ejecuta la semilla de datos al iniciar
+using (var scope = app.Services.CreateScope())
 {
-    IServiceScopeFactory? scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
-
-    using (IServiceScope? scope = scopeFactory.CreateScope())
-    {
-        SeedDB? service = scope.ServiceProvider.GetService<SeedDB>();
-        service!.SeedAsync().Wait();
-    }
+    var services = scope.ServiceProvider;
+    var seeder = services.GetRequiredService<SeedDB>();
+    await seeder.SeedAsync();
 }
 
-// Configure the HTTP request pipeline.
+// Configuración para entorno de desarrollo
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Veterinary API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Spend't API v1");
     });
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthentication();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();

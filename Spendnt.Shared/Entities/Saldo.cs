@@ -11,13 +11,7 @@ namespace Spendnt.Shared.Entities
 {
     public class Saldo
     {
-        [Key]
-        [ForeignKey("User")]
-        [JsonIgnore]
-        public string UserId { get; set; }
-
-        [JsonIgnore]
-        public User User { get; set; }
+        public int Id { get; set; }
 
         public ICollection<Ingresos> Ingresos { get; set; } = new List<Ingresos>();
         public ICollection<Egresos> Egresos { get; set; } = new List<Egresos>();
