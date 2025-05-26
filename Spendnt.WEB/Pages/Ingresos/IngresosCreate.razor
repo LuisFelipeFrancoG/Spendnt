@@ -1,0 +1,49 @@
+﻿@using CurrieTechnologies.Razor.SweetAlert2
+@using Spendnt.Shared.Entities
+@using Spendnt.WEB.Repositories
+
+@page "/Ingresos/create"
+
+@inject IRepository repository
+@inject NavigationManager navigationManager
+@inject SweetAlertService sweetAlertService
+
+
+<h3>Ingresos Create</h3>
+
+<IngresosForm @ref="ingresosForm" Ingresos="Ingresos" OnSubmit="Create" ReturnAction="Return" />
+
+
+@code {
+    public Ingresos Ingresos = new();
+    public IngresosForm ingresosForm;
+
+
+
+    private async Task Create()
+    {
+
+        var responseHttp = await repository.PostAsync("/api/Ingresos", Ingresos);
+        if (responseHttp.Error)
+        {
+
+            var mensaje = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", mensaje);
+            return;
+
+
+        }
+        navigationManager.NavigateTo("/Ingresos");
+
+    }
+
+
+
+    private void Return(){
+
+         navigationManager.NavigateTo("/Ingresos");
+
+
+
+    }
+}

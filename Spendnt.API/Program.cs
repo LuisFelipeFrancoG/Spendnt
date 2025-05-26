@@ -24,6 +24,7 @@ builder.Services.AddTransient<SeedDB>();
 
 var app = builder.Build();
 
+//Middleware
 app.UseCors(x => x
     .AllowAnyMethod()
     .AllowAnyHeader()

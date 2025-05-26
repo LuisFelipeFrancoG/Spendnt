@@ -1,0 +1,72 @@
+﻿@using CurrieTechnologies.Razor.SweetAlert2
+@using Spendnt.Shared.Entities
+@using Spendnt.WEB.Repositories
+
+@page "/Ingresos/edit/{Id:int}"
+
+@inject NavigationManager navigationManager
+@inject IRepository repository
+@inject SweetAlertService swal
+
+
+<h3>Editar Ingresos</h3>
+
+@if (Ingresos is null)
+{
+    <p>Cargando...</p>
+}
+else
+{
+    <IngresosForm @ref="IngresosForm" Ingresos="Ingresos" OnSubmit="Edit" ReturnAction="Return" />
+}
+
+@code {
+    private Ingresos Ingresos;
+    private IngresosForm IngresosForm;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var responseHTTP = await repository.GetAsync<Ingresos>($"/api/Ingresos/{Id}");
+
+        if (responseHTTP.Error)
+        {
+            if (responseHTTP.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                navigationManager.NavigateTo("Ingresos");
+            }
+            else
+            {
+                var messageError = await responseHTTP.GetErrorMessageAsync();
+                await swal.FireAsync("Error", messageError, SweetAlertIcon.Error);
+            }
+        }
+        else
+        {
+            Ingresos = responseHTTP.Response;
+        }
+    }
+
+    private async Task Edit()
+    {
+        var responseHTTP = await repository.PutAsync("/api/Ingresos", Ingresos);
+
+        if (responseHTTP.Error)
+        {
+            var mensajeError = await responseHTTP.GetErrorMessageAsync();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+          
+            navigationManager.NavigateTo("/Ingresos");
+        }
+    }
+
+    private void Return()
+    {
+        navigationManager.NavigateTo("/Ingresos");
+    }
+}

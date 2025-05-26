@@ -1,0 +1,66 @@
+﻿@using Spendnt.Shared.Entities
+@using System.Globalization
+
+@inject NavigationManager Navigation
+
+
+<EditForm Model="Ingresos" OnSubmit="OnSubmit">
+
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+
+
+
+        <div class="mb-3">
+            <label for="campoIngreso">Monto del Ingreso</label>
+            <div>
+                <InputNumber id="campoIngreso" class="form-control" @bind-Value="Ingresos.Ingreso" ParsingErrorMessage="Ingrese un monto válido." />
+                <ValidationMessage For="@(() => Ingresos.Ingreso)" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="campoFecha">Fecha del Ingreso</label>
+            <div>
+                <InputDate id="campoFecha" class="form-control" @bind-Value="Ingresos.Fecha" />
+                <ValidationMessage For="@(() => Ingresos.Fecha)" />
+            </div>
+        </div>
+
+        <label for="campoCategoria">Nombre de la Categoría</label>
+        <div>
+            <InputText id="campoCategoria" class="form-control" @bind-Value="Ingresos.NombreCategoria" />
+            <ValidationMessage For="@(() => Ingresos.NombreCategoria)" />
+        </div>
+
+    </div>
+
+
+    
+
+    <button class="btn btn-primary" type="submit">Guardar</button>
+    <button class="btn btn-success" @onclick="ReturnAction">Regresar</button>
+
+
+</EditForm>
+
+
+
+@code {
+
+    [EditorRequired]
+    [Parameter]
+    public Ingresos Ingresos { get; set; }
+
+
+    [EditorRequired]
+    [Parameter]
+    public EventCallback OnSubmit { get; set; }
+
+
+    [EditorRequired]
+    [Parameter]
+    public EventCallback ReturnAction { get; set; }
+
+}
