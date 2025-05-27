@@ -1,8 +1,6 @@
-﻿
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿// Spendnt.API/Data/DataContext.cs
 using Microsoft.EntityFrameworkCore;
 using Spendnt.Shared.Entities;
-
 
 namespace Spendnt.API.Data
 {
@@ -10,22 +8,17 @@ namespace Spendnt.API.Data
     {
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {
-
         }
 
         public DbSet<Saldo> Saldo { get; set; }
-
         public DbSet<Ingresos> Ingresos { get; set; }
-
         public DbSet<Egresos> Egresos { get; set; }
-
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<Historial> Historiales { get; set; }
         public DbSet<RecordatorioGasto> RecordatoriosGasto { get; set; }
 
-
-
-
+        public DbSet<MetaAhorro> MetasAhorro { get; set; }
+        public DbSet<TransaccionAhorro> TransaccionesAhorro { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,6 +40,16 @@ namespace Spendnt.API.Data
                 .Property(r => r.MontoEstimado)
                 .HasPrecision(18, 2);
 
+            modelBuilder.Entity<MetaAhorro>()
+                .Property(m => m.MontoObjetivo)
+                .HasPrecision(18, 2);
+            modelBuilder.Entity<MetaAhorro>()
+                .Property(m => m.MontoActual)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<TransaccionAhorro>()
+                .Property(t => t.Monto)
+                .HasPrecision(18, 2);
         }
     }
 }

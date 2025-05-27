@@ -1,0 +1,103 @@
+﻿@page "/calendario"
+@using CurrieTechnologies.Razor.SweetAlert2
+@using Spendnt.Shared.Entities
+@using Spendnt.WEB.Repositories
+@using Spendnt.Shared.DTOs
+
+@inject IRepository repository
+@inject SweetAlertService swal
+
+<h1>Calendario de Eventos Financieros</h1>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <label for="fechaInicio" class="form-label">Fecha de Inicio:</label>
+        <InputDate id="fechaInicio" class="form-control" @bind-Value="fechaInicio" />
+    </div>
+    <div class="col-md-4">
+        <label for="fechaFin" class="form-label">Fecha de Fin:</label>
+        <InputDate id="fechaFin" class="form-control" @bind-Value="fechaFin" />
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-primary" @onclick="CargarEventos">Cargar Eventos</button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando eventos...</span>
+        </div>
+    </div>
+}
+else if (eventosDelCalendario != null && eventosDelCalendario.Any())
+{
+    <div class="list-group">
+        @foreach (var evento in eventosDelCalendario.OrderBy(e => e.Start))
+        {
+            <div class="list-group-item list-group-item-action flex-column align-items-start mb-2 shadow-sm border-start border-5 @GetEventColorClass(evento.Tipo)">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">@evento.Title</h5>
+                    <small>@evento.Start.ToString("dd/MM/yyyy")</small>
+                </div>
+                <p class="mb-1">Tipo: @evento.Tipo</p>
+                @if (evento.Monto.HasValue)
+                {
+                    <small>Monto: @evento.Monto.Value.ToString("C")</small>
+                }
+            </div>
+        }
+    </div>
+}
+else if (eventosDelCalendario != null)
+{
+    <div class="alert alert-info" role="alert">
+        No se encontraron eventos para el rango de fechas seleccionado.
+    </div>
+}
+
+@code {
+    private DateTime fechaInicio = DateTime.Today.AddMonths(-1);
+    private DateTime fechaFin = DateTime.Today.AddMonths(1);
+    private List<CalendarioEventoDto> eventosDelCalendario;
+    private bool isLoading = false;
+
+    private async Task CargarEventos()
+    {
+        isLoading = true;
+        eventosDelCalendario = null;
+
+        string url = $"/api/calendarioeventos?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}";
+        var responseHttp = await repository.GetAsync<List<CalendarioEventoDto>>(url);
+
+        if (responseHttp.Error)
+        {
+            var mensajeError = await responseHttp.GetErrorMessageAsync();
+            await swal.FireAsync("Error", $"No se pudieron cargar los eventos del calendario: {mensajeError}", SweetAlertIcon.Error);
+            eventosDelCalendario = new List<CalendarioEventoDto>();
+        }
+        else
+        {
+            eventosDelCalendario = responseHttp.Response ?? new List<CalendarioEventoDto>();
+        }
+        isLoading = false;
+    }
+
+    private string GetEventColorClass(string tipoEvento)
+    {
+        return tipoEvento?.ToLower() switch
+        {
+            "ingreso" => "border-success",
+            "egreso" => "border-danger",
+            "recordatorio" => "border-warning",
+            "meta" => "border-info",
+            _ => "border-secondary",
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+    }
+}
