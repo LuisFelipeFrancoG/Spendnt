@@ -1,0 +1,39 @@
+﻿@page "/MetasAhorro/create"
+@using CurrieTechnologies.Razor.SweetAlert2
+@using Spendnt.Shared.Entities
+@using Spendnt.WEB.Repositories
+
+@inject IRepository repository
+@inject NavigationManager navigationManager
+@inject SweetAlertService sweetAlertService
+
+<h3>Crear Nueva Meta de Ahorro</h3>
+
+<MetasAhorroForm @ref="metaAhorroForm" MetaAhorro="MetaAhorro" OnSubmit="Create" ReturnAction="Return" />
+
+@code {
+    public MetaAhorro MetaAhorro = new();
+    public MetasAhorroForm metaAhorroForm;
+
+    protected override void OnInitialized()
+    {
+        MetaAhorro.FechaCreacion = DateTime.UtcNow;
+    }
+
+    private async Task Create()
+    {
+        var responseHttp = await repository.PostAsync("/api/MetasAhorro", MetaAhorro);
+        if (responseHttp.Error)
+        {
+            var mensaje = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", mensaje, SweetAlertIcon.Error);
+            return;
+        }
+        navigationManager.NavigateTo("/MetasAhorro");
+    }
+
+    private void Return()
+    {
+        navigationManager.NavigateTo("/MetasAhorro");
+    }
+}
