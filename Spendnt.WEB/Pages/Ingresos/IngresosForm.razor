@@ -1,66 +1,76 @@
-﻿@using Spendnt.Shared.Entities
-@using System.Globalization
+﻿
+@using Spendnt.Shared.Entities 
+@using System.ComponentModel.DataAnnotations;
 
-@inject NavigationManager Navigation
-
-
-<EditForm Model="Ingresos" OnSubmit="OnSubmit">
-
+@* Este EditForm debe ser flexible para el modelo que se le pase (sea Ingresos o un modelo local) *@
+<EditForm Model="IngresosModel" OnValidSubmit="OnValidSubmitCallback">
     <DataAnnotationsValidator />
 
     <div class="mb-3">
-
-
-
-        <div class="mb-3">
-            <label for="campoIngreso">Monto del Ingreso</label>
-            <div>
-                <InputNumber id="campoIngreso" class="form-control" @bind-Value="Ingresos.Ingreso" ParsingErrorMessage="Ingrese un monto válido." />
-                <ValidationMessage For="@(() => Ingresos.Ingreso)" />
-            </div>
-        </div>
-
-        <div class="mb-3">
-            <label for="campoFecha">Fecha del Ingreso</label>
-            <div>
-                <InputDate id="campoFecha" class="form-control" @bind-Value="Ingresos.Fecha" />
-                <ValidationMessage For="@(() => Ingresos.Fecha)" />
-            </div>
-        </div>
-
-        <label for="campoCategoria">Nombre de la Categoría</label>
+        <label for="campoIngresoMonto">Monto del Ingreso:</label>
         <div>
-            <InputText id="campoCategoria" class="form-control" @bind-Value="Ingresos.NombreCategoria" />
-            <ValidationMessage For="@(() => Ingresos.NombreCategoria)" />
+            @* Usamos una propiedad genérica del modelo, por ejemplo "Monto" *@
+            <InputNumber id="campoIngresoMonto" class="form-control" @bind-Value="IngresosModel.Monto" />
+            <ValidationMessage For="@(() => IngresosModel.Monto)" />
         </div>
-
     </div>
 
+    <div class="mb-3">
+        <label for="campoFecha">Fecha del Ingreso:</label>
+        <div>
+            <InputDate id="campoFecha" class="form-control" @bind-Value="IngresosModel.Fecha" />
+            <ValidationMessage For="@(() => IngresosModel.Fecha)" />
+        </div>
+    </div>
 
-    
+    <div class="mb-3">
+        <label for="campoCategoriaNombre">Nombre de la Categoría:</label>
+        <div>
+            @* Usamos una propiedad genérica del modelo, por ejemplo "NombreCategoriaForm" *@
+            <InputText id="campoCategoriaNombre" class="form-control" @bind-Value="IngresosModel.NombreCategoriaForm" />
+            <ValidationMessage For="@(() => IngresosModel.NombreCategoriaForm)" />
+        </div>
+    </div>
 
-    <button class="btn btn-primary" type="submit">Guardar</button>
-    <button class="btn btn-success" @onclick="ReturnAction">Regresar</button>
-
-
+    <button class="btn btn-primary" type="submit">@ButtonText</button>
+    <button class="btn btn-success" type="button" @onclick="ReturnActionCallback">Regresar</button>
 </EditForm>
-
-
 
 @code {
 
-    [EditorRequired]
+
+
     [Parameter]
-    public Ingresos Ingresos { get; set; }
-
-
     [EditorRequired]
+    public IngresoFormModel IngresosModel { get; set; } = null!; // Usaremos un modelo de formulario específico
+
     [Parameter]
-    public EventCallback OnSubmit { get; set; }
-
-
     [EditorRequired]
-    [Parameter]
-    public EventCallback ReturnAction { get; set; }
+    public EventCallback OnValidSubmitCallback { get; set; }
 
+    [Parameter]
+    [EditorRequired]
+    public EventCallback ReturnActionCallback { get; set; }
+
+    [Parameter] public string ButtonText { get; set; } = "Guardar";
+
+    // Modelo específico para el formulario de Ingresos
+    // Esto ayuda a desacoplar el formulario de la entidad directa
+    // y alinear con lo que la API espera para Crear/Actualizar (Monto, Categoria string, Fecha)
+    public class IngresoFormModel
+    {
+        public int Id { get; set; } // Para la edición
+
+        [Required(ErrorMessage = "El monto del ingreso es requerido.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El monto del ingreso debe ser mayor que cero.")]
+        public decimal Monto { get; set; }
+
+        [Required(ErrorMessage = "La fecha es requerida.")]
+        public DateTime Fecha { get; set; } = DateTime.Today;
+
+        // Esta es la que el usuario ingresará en el formulario (el nombre de la categoría)
+        [Required(ErrorMessage = "El nombre de la categoría es requerido para el formulario.")]
+        [StringLength(100, ErrorMessage = "El nombre de la categoría no puede exceder los 100 caracteres.")]
+        public string NombreCategoriaForm { get; set; } = string.Empty;
+    }
 }
