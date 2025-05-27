@@ -1,131 +1,72 @@
-﻿@page "/Ingresos/edit/{Id:int}"
-@using CurrieTechnologies.Razor.SweetAlert2
-@using Spendnt.Shared.Entities // Usamos la entidad Ingresos para la lista
+﻿@using CurrieTechnologies.Razor.SweetAlert2
+@using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
-@using Spendnt.WEB.Shared // Para GenericList
 
-@inject IRepository repository
+@page "/Ingresos/edit/{Id:int}"
+
 @inject NavigationManager navigationManager
+@inject IRepository repository
 @inject SweetAlertService swal
 
-<h1>Ingresos</h1>
 
-<GenericList MyList="ingresosList" Loading="@loadingSpinner" NoRecords="@noRecordsMessage">
-    <Body>
-        <div class="card">
-            <div class="card-header">
-                <span>
-                    <i class="oi oi-list-rich"></i> Ingresos Registrados
-                    <a class="btn btn-sm btn-primary float-end" href="/Ingresos/create"><i class="oi oi-plus"></i> Crear Ingreso</a>
-                </span>
-            </div>
-            <div class="card-body">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>Monto</th>
-                            <th>Fecha</th>
-                            <th>Categoría</th>
-                            <th style="width: 200px;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var ingreso in ingresosList!)
-                        {
-                            <tr>
-                                <td>@ingreso.Ingreso.ToString("C")</td>
-                                <td>@ingreso.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>@ingreso.NombreCategoria</td>
-                                <td>
-                                    <a href="/Ingresos/edit/@ingreso.Id" class="btn btn-warning btn-sm" title="Editar">
-                                        <i class="oi oi-pencil" /> Editar
-                                    </a>
-                                    <button class="btn btn-danger btn-sm" @onclick=@(() => DeleteAsync(ingreso)) title="Borrar">
-                                        <i class="oi oi-trash" /> Borrar
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </Body>
-</GenericList>
+<h3>IngresosEdit</h3>
+
+@if (Ingresos is null)
+{
+    <p>Cargando...</p>
+}
+else
+{
+    <IngresosForm @ref="IngresosForm" Ingresos="Ingresos" OnSubmit="Edit" ReturnAction="Return" />
+}
 
 @code {
-    private List<Ingresos> ingresosList; // Usamos la entidad directa, asumiendo que el mapeo de la API funciona
+    private Ingresos Ingresos;
+    private IngresosForm IngresosForm;
 
-    // Para GenericList
-    private RenderFragment loadingSpinner = @<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p>Cargando ingresos...</p></div>;
-    private RenderFragment noRecordsMessage = @<div class="alert alert-info" role="alert">No hay ingresos registrados todavía. <a href="/Ingresos/create">Crea uno nuevo</a>.</div>;
-
+    [Parameter]
+    public int Id { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAsync();
-    }
+        var responseHTTP = await repository.GetAsync<Ingresos>($"/api/Ingresos/{Id}");
 
-    private async Task LoadAsync()
-    {
-        // La API GetIngresos devuelve una lista de IngresoResponseDto.
-        // Intentamos deserializarla directamente a List<Ingresos>.
-        // Esto funcionará si las propiedades coinciden (ej. "Monto" en DTO a "Ingreso" en Entidad)
-        // y "CategoriaNombre" en DTO a "NombreCategoria" en Entidad.
-        // Asegúrate que tu entidad `Spendnt.Shared.Entities.Ingresos` tenga:
-        // [JsonPropertyName("monto")] public decimal Ingreso { get; set; }
-        // [JsonPropertyName("categoriaNombre")] public string NombreCategoria { get; set; }
-        // y así sucesivamente para las propiedades que vienen del IngresoResponseDto de la API.
-        var responseHttp = await repository.GetAsync<List<Ingresos>>("/api/Ingresos");
-        if (responseHttp.Error)
+        if (responseHTTP.Error)
         {
-            var message = await responseHttp.GetErrorMessageAsync();
-            await swal.FireAsync("Error", $"No se pudieron cargar los ingresos: {message}", SweetAlertIcon.Error);
-            ingresosList = new List<Ingresos>();
+            if (responseHTTP.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                navigationManager.NavigateTo("Ingresos");
+            }
+            else
+            {
+                var messageError = await responseHTTP.GetErrorMessageAsync();
+                await swal.FireAsync("Error", messageError, SweetAlertIcon.Error);
+            }
         }
         else
         {
-            ingresosList = responseHttp.Response!;
+            Ingresos = responseHTTP.Response;
         }
-        StateHasChanged(); // Para asegurar que GenericList se actualice
     }
 
-    private async Task DeleteAsync(Ingresos ingresoParaBorrar)
+    private async Task Edit()
     {
-        var result = await swal.FireAsync(new SweetAlertOptions
-        {
-            Title = "Confirmación",
-            Text = $"¿Está seguro que quiere borrar el ingreso de {ingresoParaBorrar.Ingreso:C} ({ingresoParaBorrar.NombreCategoria}) del {ingresoParaBorrar.Fecha:dd/MM/yyyy}?",
-            Icon = SweetAlertIcon.Question,
-            ShowCancelButton = true,
-            ConfirmButtonText = "Sí, borrar",
-            CancelButtonText = "No, cancelar",
-            ConfirmButtonColor = "#dc3545"
-        });
-
-        if (!result.IsConfirmed)
-        {
-            return;
-        }
-
-        var responseHTTP = await repository.DeleteAsync($"api/Ingresos/{ingresoParaBorrar.Id}");
+        var responseHTTP = await repository.PutAsync("/api/Ingresos", Ingresos);
 
         if (responseHTTP.Error)
         {
             var mensajeError = await responseHTTP.GetErrorMessageAsync();
-            if (responseHTTP.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                await swal.FireAsync("Advertencia", $"Ingreso con Id {ingresoParaBorrar.Id} no encontrado.", SweetAlertIcon.Warning);
-            }
-            else
-            {
-                await swal.FireAsync("Error", $"Ocurrió un error al eliminar: {mensajeError}", SweetAlertIcon.Error);
-            }
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
         }
         else
         {
-            await swal.FireAsync("Eliminado", "El ingreso ha sido eliminado exitosamente.", SweetAlertIcon.Success);
+          
+            navigationManager.NavigateTo("/Ingresos");
         }
-        await LoadAsync(); // Recargar la lista
+    }
+
+    private void Return()
+    {
+        navigationManager.NavigateTo("/Ingresos");
     }
 }

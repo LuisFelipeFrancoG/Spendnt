@@ -168,7 +168,7 @@ namespace Spendnt.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Saldos");
+                    b.ToTable("Saldo");
                 });
 
             modelBuilder.Entity("Spendnt.Shared.Entities.Egresos", b =>

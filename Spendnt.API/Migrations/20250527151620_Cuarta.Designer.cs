@@ -12,8 +12,8 @@ using Spendnt.API.Data;
 namespace Spendnt.API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250526124629_Tercera")]
-    partial class Tercera
+    [Migration("20250527151620_Cuarta")]
+    partial class Cuarta
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -171,7 +171,7 @@ namespace Spendnt.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Saldos");
+                    b.ToTable("Saldo");
                 });
 
             modelBuilder.Entity("Spendnt.Shared.Entities.Egresos", b =>

@@ -25,7 +25,7 @@ namespace Spendnt.Shared.Entities
 
         [JsonIgnore]
         [Display(Name = "Nombre de Categoría")]
-        public Categoria Categoria { get; set; }
+        public List<Categoria> Categorias { get; set; }
 
         public int SaldoId { get; set; }
 

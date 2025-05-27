@@ -1,47 +1,49 @@
-﻿@page "/Ingresos/create"
-@using CurrieTechnologies.Razor.SweetAlert2
+﻿@using CurrieTechnologies.Razor.SweetAlert2
+@using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
-@using static Spendnt.WEB.Pages.Ingresos.IngresosForm // Para acceder a IngresoFormModel
+
+@page "/Ingresos/create"
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
-@inject SweetAlertService swal
+@inject SweetAlertService sweetAlertService
 
-<h3>Crear Nuevo Ingreso</h3>
 
-<IngresosForm IngresosModel="ingresoFormModel"
-              OnValidSubmitCallback="CreateAsync"
-              ReturnActionCallback="Return"
-              ButtonText="Crear Ingreso" />
+<h3>IngresosCreate</h3>
+
+<IngresosForm @ref="ingresosForm" Ingresos="Ingresos" OnSubmit="Create" ReturnAction="Return" />
+
 
 @code {
-    private IngresoFormModel ingresoFormModel = new IngresoFormModel();
+    public Ingresos Ingresos = new();
+    public IngresosForm ingresosForm;
 
-    private async Task CreateAsync()
+
+
+    private async Task Create()
     {
-        // Mapear IngresoFormModel a IngresoCreateDto (que la API espera)
-        // La API IngresosController.PostIngreso espera un DTO con Monto, Categoria (string), Fecha
-        var ingresoCreateApiDto = new // Define aquí la estructura que IngresosController.PostIngreso espera
-        {
-            Monto = ingresoFormModel.Monto,
-            Categoria = ingresoFormModel.NombreCategoriaForm, // Nombre de la categoría del form
-            Fecha = ingresoFormModel.Fecha
-        };
 
-        var responseHttp = await repository.PostAsync("/api/Ingresos", ingresoCreateApiDto);
-
+        var responseHttp = await repository.PostAsync("/api/Ingresos", Ingresos);
         if (responseHttp.Error)
         {
+
             var mensaje = await responseHttp.GetErrorMessageAsync();
-            // Si SweetAlert2 sigue fallando, es la configuración en Program.cs/index.html
-            await swal.FireAsync("Error", $"Error al crear: {mensaje}", SweetAlertIcon.Error);
+            await sweetAlertService.FireAsync("Error", mensaje);
             return;
+
+
         }
         navigationManager.NavigateTo("/Ingresos");
+
     }
 
-    private void Return()
-    {
+
+
+    private void Return(){
+
         navigationManager.NavigateTo("/Ingresos");
+
+
+
     }
 }

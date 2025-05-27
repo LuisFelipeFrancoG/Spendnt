@@ -1,150 +1,144 @@
-﻿@page "/Ingresos"
+﻿@page "/owners"
 @using CurrieTechnologies.Razor.SweetAlert2
-@using Spendnt.Shared.Entities // Usamos la entidad Ingresos directamente
+@using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
-@using Spendnt.WEB.Shared // Si tienes el componente GenericList aquí
+@using Spendnt.WEB.Shared
+@using Microsoft.AspNetCore.Authorization;
+
+
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
 @inject SweetAlertService swal
 
-<h1>Ingresos</h1>
 
-@if (IngresosList is null) // Cambié el nombre de la variable para claridad
+
+<h1>IngresosIndex</h1>
+
+@if (Ingresos is null)
 {
-    <div class="text-center">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
-        <p>Cargando ingresos...</p>
-    </div>
-}
-else if (!IngresosList.Any())
-{
-    <div class="alert alert-info" role="alert">
-        No hay ingresos registrados todavía. <a href="/Ingresos/create">Crea uno nuevo</a>.
-    </div>
-    <div class="mb-2">
-        <a class="btn btn-sm btn-primary" href="/Ingresos/create"><i class="oi oi-plus"></i> Crear Ingreso</a>
-    </div>
+    <div class="spinner" />
 }
 else
 {
-    <div class="card">
-        <div class="card-header">
-            <span>
-                <i class="oi oi-list-rich"></i> Ingresos Registrados
-                <a class="btn btn-sm btn-primary float-end" href="/Ingresos/create"><i class="oi oi-plus"></i> Crear Ingreso</a>
-            </span>
-        </div>
-        <div class="card-body">
-            <GenericList MyList="IngresosList">
-                <Body>
-                    <table class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>Monto</th>
-                                <th>Fecha</th>
-                                <th>Categoría</th>
-                                <th style="width: 200px;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var ingreso in IngresosList!)
-                            {
-                                <tr>
-                                    <td>@ingreso.Ingreso.ToString("C")</td> @* Asumiendo que 'Ingreso' es el monto y 'NombreCategoria' es el nombre *@
-                                    <td>@ingreso.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td>@ingreso.NombreCategoria</td> @* O 'ingreso.Categoria.Nombre' si Categoria está cargada, pero NombreCategoria es más probable por tu entidad *@
-                                    <td>
-                                        <a href="/Ingresos/edit/@ingreso.Id" class="btn btn-war ning btn-sm" title="Editar">
-                                            <i class="oi oi-pencil" /> Editar
-                                        </a>
-                                        <button class="btn btn-danger btn-sm" @onclick=@(() => DeleteAsync(ingreso)) title="Borrar">
-                                            <i class="oi oi-trash" /> Borrar
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </Body>
-            </GenericList>
-        </div>
-    </div>
+
+
+
+
+
+    <GenericList MyList="Ingresos">
+
+        <Body>
+
+            <div class="card">
+                <div class="card-header">
+                    <span>
+                        <i class="oi oi-globe"></i> Ingresos
+                        <a class="btn btn-sm btn-primary float-end" href="/Ingresos/create"><i class="oi oi-plus"></i> Crear Ingresos</a>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2" style="display: flex; flex-wrap:wrap; align-items: center;">
+                    </div>
+                </div>
+            </div>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Ingresos</th>
+
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ingresos in Ingresos!)
+                    {
+                        <tr>
+
+                            <td>
+                                @ingresos.Ingreso
+                            </td>
+                            <td>
+                                @ingresos.Fecha
+                            </td>
+
+
+                            <td>
+                                @ingresos.Categorias
+                            </td>
+
+
+                            <td>
+                                <a href="/Ingresos/edit/@ingresos.Id" class="btn btn-warning btn-sm"><i class="oi oi-pencil" /> Editar</a>
+                                <button class="btn btn-danger btn-sm" @onclick=@(() => DeleteAsync(ingresos))><i class="oi oi-trash" /> Borrar</button>
+
+
+                            </td>
+
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        </Body>
+
+    </GenericList>
 }
 
+
+
+
 @code {
-    public List<Ingresos> IngresosList { get; set; } // Mantenemos el uso de la entidad Ingresos
 
-    protected override async Task OnInitializedAsync()
+
+    public List<Ingresos> Ingresos { get; set; }
+
+    protected async override Task OnInitializedAsync()
     {
-        await LoadAsync();
+        await Load();
     }
 
-    private async Task LoadAsync()
+    private async Task Load()
     {
-        // Aquí es donde la magia de la deserialización ocurre.
-        // El cliente pide List<Ingresos>. La API devuelve un JSON basado en IngresoResponseDto.
-        // Si esto funciona, es porque System.Text.Json mapea las propiedades.
-        // Por ejemplo, "monto" del JSON (de IngresoResponseDto) a "Ingreso" en la entidad Ingresos,
-        // y "categoriaNombre" del JSON a "NombreCategoria" en la entidad.
-        var responseHttp = await repository.GetAsync<List<Ingresos>>("/api/Ingresos");
-        if (responseHttp.Error)
-        {
-            var message = await responseHttp.GetErrorMessageAsync();
-            await swal.FireAsync("Error", $"No se pudieron cargar los ingresos: {message}", SweetAlertIcon.Error);
-            IngresosList = new List<Ingresos>();
-        }
-        else
-        {
-            IngresosList = responseHttp.Response!;
-            if (IngresosList.Any() && string.IsNullOrEmpty(IngresosList.First().NombreCategoria))
-            {
-                // Pequeña advertencia si el mapeo de NombreCategoria no funcionó como se esperaba
-                Console.WriteLine("Advertencia: NombreCategoria podría no estar mapeándose correctamente desde la API.");
-            }
-        }
+        var responseHppt = await repository.GetAsync<List<Ingresos>>("/api/Ingresos");
+        Ingresos = responseHppt.Response!;
     }
 
-    private async Task DeleteAsync(Ingresos ingresoParaBorrar) // Acepta la entidad Ingresos
+    private async Task DeleteAsync(Ingresos Ingresos)
     {
         var result = await swal.FireAsync(new SweetAlertOptions
-        {
-            Title = "Confirmación",
-            // Usamos las propiedades de la entidad Ingresos
-            Text = $"¿Está seguro que quiere borrar el ingreso de {ingresoParaBorrar.Ingreso:C} ({ingresoParaBorrar.NombreCategoria}) del {ingresoParaBorrar.Fecha:dd/MM/yyyy}?",
-            Icon = SweetAlertIcon.Question,
-            ShowCancelButton = true,
-            ConfirmButtonText = "Sí, borrar",
-            CancelButtonText = "No, cancelar",
-            ConfirmButtonColor = "#dc3545"
-        });
+            {
+                Title = "Confirmación",
+                Text = "¿Esta seguro que quieres borrar el registro?",
+                Icon = SweetAlertIcon.Question,
+                ShowCancelButton = true
+            });
 
-        if (!result.IsConfirmed)
+        var confirm = string.IsNullOrEmpty(result.Value);
+
+        if (confirm)
         {
             return;
         }
 
-        var responseHTTP = await repository.DeleteAsync($"api/Ingresos/{ingresoParaBorrar.Id}");
+        var responseHTTP = await repository.DeleteAsync($"api/Ingresos/{Ingresos.Id}");
 
         if (responseHTTP.Error)
         {
-            var mensajeError = await responseHTTP.GetErrorMessageAsync();
             if (responseHTTP.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                await swal.FireAsync("Advertencia", $"Ingreso con Id {ingresoParaBorrar.Id} no encontrado. Pudo haber sido eliminado.", SweetAlertIcon.Warning);
-                await LoadAsync();
+                navigationManager.NavigateTo("/");
             }
             else
             {
-                await swal.FireAsync("Error", $"Ocurrió un error al eliminar: {mensajeError}", SweetAlertIcon.Error);
+                var mensajeError = await responseHTTP.GetErrorMessageAsync();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             }
         }
         else
         {
-            await LoadAsync();
-            await swal.FireAsync("Eliminado", "El ingreso ha sido eliminado exitosamente.", SweetAlertIcon.Success);
+            await Load();
         }
     }
 }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Spendnt.API.Migrations
 {
     /// <inheritdoc />
-    public partial class Tercera : Migration
+    public partial class Cuarta : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -42,7 +42,7 @@ namespace Spendnt.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Saldos",
+                name: "Saldo",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -50,7 +50,7 @@ namespace Spendnt.API.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Saldos", x => x.Id);
+                    table.PrimaryKey("PK_Saldo", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -83,8 +83,8 @@ namespace Spendnt.API.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Egreso = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    CategoriaId = table.Column<int>(type: "int", nullable: false),
                     Fecha = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CategoriaId = table.Column<int>(type: "int", nullable: false),
                     SaldoId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -97,9 +97,9 @@ namespace Spendnt.API.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Egresos_Saldos_SaldoId",
+                        name: "FK_Egresos_Saldo_SaldoId",
                         column: x => x.SaldoId,
-                        principalTable: "Saldos",
+                        principalTable: "Saldo",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -125,9 +125,9 @@ namespace Spendnt.API.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Ingresos_Saldos_SaldoId",
+                        name: "FK_Ingresos_Saldo_SaldoId",
                         column: x => x.SaldoId,
-                        principalTable: "Saldos",
+                        principalTable: "Saldo",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -177,7 +177,7 @@ namespace Spendnt.API.Migrations
                 name: "Categorias");
 
             migrationBuilder.DropTable(
-                name: "Saldos");
+                name: "Saldo");
         }
     }
 }

@@ -55,12 +55,12 @@ namespace Spendnt.API.Data
 
         private async Task<Saldo> SeedSaldoPrincipalAsync()
         {
-            Saldo saldo = await _context.Saldos.FirstOrDefaultAsync();
+            Saldo saldo = await _context.Saldo.FirstOrDefaultAsync();
 
             if (saldo == null)
             {
                 saldo = new Saldo();
-                _context.Saldos.Add(saldo);
+                _context.Saldo.Add(saldo);
                 await _context.SaveChangesAsync();
             }
             return saldo;
