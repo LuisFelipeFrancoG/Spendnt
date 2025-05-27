@@ -1,134 +1,184 @@
-﻿@page "/Saldos"
-@using CurrieTechnologies.Razor.SweetAlert2
-@using Spendnt.Shared.Entities
-@using Spendnt.WEB.Repositories
-@using Spendnt.WEB.Shared
-@using Microsoft.AspNetCore.Authorization;
+﻿@page "/saldo" 
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
 @inject SweetAlertService swal
+@using System.Globalization
+@using CurrieTechnologies.Razor.SweetAlert2
+@using Spendnt.WEB.Repositories
 
-
-
-<h1>SaldoIndex</h1>
-
-@if (Saldos is null)
-{
-    <div class="spinner" />
+@*
+    Definimos un DTO local mínimo solo con los campos que esta página necesita.
+    Debe ser compatible con lo que devuelve tu API /api/saldos (SaldoResponseDto).
+*@
+@code {
+    public class SaldoSimpleDto
+    {
+        public int Id { get; set; } // Necesario para la eliminación
+        public decimal TotalSaldoCalculado { get; set; }
+    }
 }
-else
-{
 
+<PageTitle>Mi Saldo Actual</PageTitle>
 
-
-
-
-    <GenericList MyList="Saldos">
-
-        <Body>
-
-            @*<div class="card">
-                <div class="card-header">
-                    <span>
-                        <i class="oi oi-globe"></i> Owners
-                        <a class="btn btn-sm btn-primary float-end" href="/Owners/create"><i class="oi oi-plus"></i> Crear Owner</a>
-                    </span>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5"> @* Ajustado el ancho para una tarjeta más compacta *@
+            
+            @if (saldoActual is null && !errorAlCargar && !cargaInicialCompletada)
+            {
+                <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <span class="ms-2">Cargando saldo...</span>
                 </div>
-                <div class="card-body">
-                    <div class="mb-2" style="display: flex; flex-wrap:wrap; align-items: center;">
+            }
+            else if (errorAlCargar)
+            {
+                <div class="alert alert-danger" role="alert">
+                    <strong>Error:</strong> @mensajeErrorCarga
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-info btn-sm" @onclick="LoadSaldoAsync">Reintentar Carga</button>
+                </div>
+            }
+            else if (saldoActual is not null)
+            {
+                <div class="card text-center shadow-lg">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="mb-0"><i class="oi oi-dollar"></i> Saldo Neto</h3>
+                    </div>
+                    <div class="card-body py-5">
+                        <h1 class="display-2 fw-bolder @(saldoActual.TotalSaldoCalculado >= 0 ? "text-success" : "text-danger")" style="font-size: 3.5rem;">
+                            @saldoActual.TotalSaldoCalculado.ToString("C2", CultureInfo.CurrentCulture)
+                        </h1>
+                        <p class="text-muted small mt-2 mb-0">(Referencia de Saldo ID: @saldoActual.Id)</p>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <button class="btn btn-danger w-100" @onclick='() => ConfirmDeleteSaldoAsync(saldoActual.Id)'>
+                            <i class="oi oi-trash" /> Eliminar Saldo
+                        </button>
                     </div>
                 </div>
-            </div>*@
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Saldo</th>
+            }
+            else // Si saldoActual es null y no hay error de carga (ej. API devuelve 404 Not Found)
+            {
+                <div class="alert alert-secondary text-center">
+                    <p class="lead mb-2">Aún no hay un saldo registrado.</p>
+                    <p class="mb-0">Empieza registrando un ingreso o egreso.</p>
+                    <div class="mt-3">
+                        <button class="btn btn-primary me-2" @onclick='() => navigationManager.NavigateTo("/ingresos")'><i class="oi oi-plus"></i> Registrar Ingreso</button>
+                        <button class="btn btn-success" @onclick='() => navigationManager.NavigateTo("/egresos")'><i class="oi oi-minus"></i> Registrar Egreso</button>
+                    </div>
+                </div>
+            }
 
-
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var saldo in Saldos!)
-                    {
-                        <tr>
-
-                            <td>
-                                @saldo.TotalSaldo
-                            </td>
-                            
-
-                            <td>
-                                @*<a href="/Owners/edit/@owner.Id" class="btn btn-warning btn-sm"><i class="oi oi-pencil" /> Editar</a>*@
-                                <button class="btn btn-danger btn-sm" @onclick=@(() => DeleteAsync(saldo))><i class="oi oi-trash" /> Borrar</button>
-
-
-                            </td>
-
-
-                        </tr>
-                    }
-                </tbody>
-            </table>
-
-        </Body>
-
-    </GenericList>
-}
-
-
-
+        </div>
+    </div>
+</div>
 
 @code {
+    private SaldoSimpleDto? saldoActual;
+    private bool errorAlCargar = false;
+    private string mensajeErrorCarga = string.Empty;
+    private bool cargaInicialCompletada = false; // Para manejar mejor el estado inicial
 
-
-    public List<Saldo> Saldos { get; set; }
-
-    protected async override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        await Load();
+        await LoadSaldoAsync();
+        cargaInicialCompletada = true; // Marcamos que el primer intento de carga se completó
     }
 
-    private async Task Load()
+    private async Task LoadSaldoAsync()
     {
-        var responseHppt = await repository.GetAsync<List<Saldo>>("/api/Saldos");
-        Saldos = responseHppt.Response!;
-    }
-
-    private async Task DeleteAsync(Saldo saldo)
-    {
-        var result = await swal.FireAsync(new SweetAlertOptions
-            {
-                Title = "Confirmación",
-                Text = "¿Esta seguro que quieres borrar el registro?",
-                Icon = SweetAlertIcon.Question,
-                ShowCancelButton = true
-            });
-
-        var confirm = string.IsNullOrEmpty(result.Value);
-
-        if (confirm)
-        {
-            return;
+        errorAlCargar = false;
+        mensajeErrorCarga = string.Empty;
+        saldoActual = null; // Limpia para mostrar el spinner si es una recarga
+        if (cargaInicialCompletada) { // Solo llama StateHasChanged si no es la carga inicial para evitar doble renderizado
+            StateHasChanged();
         }
 
-        var responseHTTP = await repository.DeleteAsync($"api/SAldos/{saldo.Id}");
 
-        if (responseHTTP.Error)
+        // Tu SaldosController en GET /api/saldos (GetSaldoGlobal) devuelve SaldoResponseDto.
+        // HttpClientJsonExtensions mapeará las propiedades coincidentes a SaldoSimpleDto.
+        var responseHttp = await repository.GetAsync<SaldoSimpleDto>("/api/saldos");
+
+        if (responseHttp.Error)
         {
-            if (responseHTTP.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+            errorAlCargar = true;
+            if (responseHttp.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                navigationManager.NavigateTo("/");
+                mensajeErrorCarga = "No se encontró ningún saldo. Registre una transacción para crearlo.";
+                // saldoActual permanece null, la UI mostrará el mensaje correspondiente.
             }
             else
             {
-                var mensajeError = await responseHTTP.GetErrorMessageAsync();
-                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+                mensajeErrorCarga = await responseHttp.GetErrorMessageAsync() ?? "Ocurrió un error al cargar el saldo.";
             }
         }
         else
         {
-            await Load();
+            saldoActual = responseHttp.Response;
+            if (saldoActual == null && !errorAlCargar) // Si la API devuelve 200 OK pero el cuerpo es null/vacío
+            {
+                mensajeErrorCarga = "No se recibieron datos de saldo válidos desde el servidor.";
+                // errorAlCargar podría ser true aquí, o simplemente dejar saldoActual como null
+                // para que se muestre el mensaje de "Aún no hay saldo".
+            }
+        }
+        StateHasChanged(); // Actualiza la UI
+    }
+
+    private async Task ConfirmDeleteSaldoAsync(int saldoIdParaBorrar)
+    {
+        var result = await swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "¿Está realmente seguro?",
+            Text = $"Va a eliminar el saldo con ID: {saldoIdParaBorrar}. Esta acción no se puede deshacer y su saldo se reiniciará si vuelve a registrar transacciones.",
+            Icon = SweetAlertIcon.Warning,
+            ShowCancelButton = true,
+            ConfirmButtonText = "Sí, eliminar",
+            ConfirmButtonColor = "#e74c3c", // Un rojo más estándar para peligro
+            CancelButtonText = "Cancelar"
+        });
+
+        if (!result.IsConfirmed)
+        {
+            return; // El usuario canceló
+        }
+        await DeleteSaldoDefinitivoAsync(saldoIdParaBorrar);
+    }
+
+    private async Task DeleteSaldoDefinitivoAsync(int saldoIdParaBorrar)
+    {
+        var responseHttp = await repository.DeleteAsync($"/api/saldos/{saldoIdParaBorrar}");
+
+        if (responseHttp.Error)
+        {
+            string errorMessage = await responseHttp.GetErrorMessageAsync() ?? "Error desconocido al intentar eliminar el saldo.";
+            if (responseHttp.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                errorMessage = $"No se pudo eliminar: {errorMessage}"; // El backend ya da un mensaje específico
+            }
+            else if (responseHttp.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                errorMessage = $"El saldo con ID: {saldoIdParaBorrar} no fue encontrado (quizás ya fue eliminado).";
+            }
+            await swal.FireAsync("Error", errorMessage, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync(new SweetAlertOptions {
+                Title = "¡Saldo Eliminado!",
+                Text = $"El saldo con ID: {saldoIdParaBorrar} ha sido eliminado con éxito.",
+                Icon = SweetAlertIcon.Success,
+                Timer = 2500,
+                ShowConfirmButton = false
+            });
+            // Después de eliminar, el saldo ya no existe.
+            // Volver a cargar debería resultar en el mensaje "No se encontró ningún saldo".
+            await LoadSaldoAsync();
         }
     }
 }
