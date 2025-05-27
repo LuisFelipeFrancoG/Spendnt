@@ -20,13 +20,13 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
+            <NavLink class="nav-link" href="egresos">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Egresos
             </NavLink>
         </div>
   
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Saldo">
+            <NavLink class="nav-link" href="saldo">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Saldo
             </NavLink>
         </div>
@@ -37,7 +37,7 @@
 @code {
     private bool collapseNavMenu = true;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
     {
