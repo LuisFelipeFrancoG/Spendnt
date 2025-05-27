@@ -1,8 +1,7 @@
-﻿@page "/Saldo" 
+﻿@page "/Saldo"
 @using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
 @using Microsoft.AspNetCore.Authorization 
-
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
@@ -51,19 +50,23 @@ else if (saldoActual != null)
             }
         </div>
         <div class="card-footer text-muted">
-            Última actualización implícita al cargar esta página.
+            <small>Última actualización al cargar esta página.</small>
             <button class="btn btn-sm btn-outline-secondary float-end" @onclick="LoadSaldo"><i class="bi bi-arrow-clockwise"></i> Refrescar</button>
         </div>
     </div>
-
+    <div>
+        <br />
+        <a href="/Saldo/edit/@saldoActual.Id" class="btn btn-warning"><i class="oi oi-pencil" /> Editar Saldo Manual</a>
+    </div>
 }
 else
 {
-    <p>No hay información de saldo disponible.</p>
+    <p>No hay información de saldo disponible o no se encontró un saldo principal.</p>
+    <p>Asegúrate de que el SeedDB haya creado un saldo inicial y que la API funcione correctamente.</p>
 }
 
 @code {
-    private Saldo saldoActual; 
+    private Saldo saldoActual;
     private bool errorAlCargar = false;
 
     protected override async Task OnInitializedAsync()
@@ -73,22 +76,26 @@ else
 
     private async Task LoadSaldo()
     {
-        saldoActual = null; 
+        saldoActual = null;
         errorAlCargar = false;
-        StateHasChanged(); 
 
-        var responseHttp = await repository.GetAsync<Saldo>("/api/Saldo/current"); 
+        var responseHttp = await repository.GetAsync<Saldo>("/api/Saldo/current");
 
         if (responseHttp.Error)
         {
             errorAlCargar = true;
             var mensajeError = await responseHttp.GetErrorMessageAsync();
-            Console.WriteLine($"Error cargando saldo: {mensajeError}"); 
+            Console.WriteLine($"Error cargando saldo: {mensajeError}");
         }
         else
         {
             saldoActual = responseHttp.Response;
+            if (saldoActual == null)
+            {
+                errorAlCargar = true; 
+                Console.WriteLine("El saldo fue cargado como null desde la API a pesar de no haber error HTTP.");
+            }
         }
+        StateHasChanged(); 
     }
-
 }

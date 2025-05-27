@@ -2,143 +2,110 @@
 @using CurrieTechnologies.Razor.SweetAlert2
 @using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
-@using Spendnt.WEB.Shared
-@using Microsoft.AspNetCore.Authorization;
-
-
+@using Spendnt.WEB.Shared // Para GenericList
+@using Microsoft.AspNetCore.Authorization // Si aplica
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
 @inject SweetAlertService swal
 
+<h1>Lista de Egresos</h1>
 
+<div class="mb-3">
+    <a class="btn btn-primary" href="/Egresos/create"><i class="bi bi-dash-circle-fill"></i> Registrar Nuevo Egreso</a>
+</div>
 
-<h1>EgresosIndex</h1>
-
-@if (Egresos is null)
-{
-    <div class="spinner" />
-}
-else
-{
-
-
-
-
-
-    <GenericList MyList="Egresos">
-
-        <Body>
-
-            <div class="card">
-                <div class="card-header">
-                    <span>
-                        <i class="oi oi-globe"></i> Egresos
-                        <a class="btn btn-sm btn-primary float-end" href="/Egresos/create"><i class="oi oi-plus"></i> Crear Egresos</a>
-                    </span>
-                </div>
-                <div class="card-body">
-                    <div class="mb-2" style="display: flex; flex-wrap:wrap; align-items: center;">
-                    </div>
-                </div>
+<GenericList MyList="listaEgresos">
+    <Loading>
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Cargando egresos...</span>
             </div>
-            <table class="table table-striped">
-                <thead>
+        </div>
+    </Loading>
+    <NoRecords>
+        <div class="alert alert-info" role="alert">
+            Aún no hay egresos registrados. ¡Comienza <a href="/Egresos/create" class="alert-link">agregando uno nuevo</a>!
+        </div>
+    </NoRecords>
+    <Body>
+        <table class="table table-striped table-hover shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Monto</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var egresoItem in listaEgresos!)
+                {
                     <tr>
-                        <th>Egresos</th>
-
-
+                        <td>@egresoItem.Egreso.ToString("C")</td>
+                        <td>@egresoItem.Fecha.ToString("dd/MM/yyyy")</td>
+                        
+                        <td>
+                            <a href="/Egresos/edit/@egresoItem.Id" class="btn btn-warning btn-sm me-1" title="Editar"><i class="bi bi-pencil-square"></i></a>
+                            <button class="btn btn-danger btn-sm" @onclick=@(() => DeleteAsync(egresoItem)) title="Borrar"><i class="bi bi-trash3-fill"></i></button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var egresos in Egresos!)
-                    {
-                        <tr>
-
-                            <td>
-                                @egresos.Egreso
-                            </td>
-                            <td>
-                                @egresos.Fecha
-                            </td>
-
-
-                            <td>
-                                @egresos.Categorias
-                            </td>
-
-
-                            <td>
-                                <a href="/Egresos/edit/@egresos.Id" class="btn btn-warning btn-sm"><i class="oi oi-pencil" /> Editar</a>
-                                <button class="btn btn-danger btn-sm" @onclick=@(() => DeleteAsync(egresos))><i class="oi oi-trash" /> Borrar</button>
-
-
-                            </td>
-
-
-                        </tr>
-                    }
-                </tbody>
-            </table>
-
-        </Body>
-
-    </GenericList>
-}
-
-
-
+                }
+            </tbody>
+        </table>
+    </Body>
+</GenericList>
 
 @code {
+    private List<Egresos> listaEgresos;
 
-
-    public List<Egresos> Egresos { get; set; }
-
-    protected async override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        await Load();
+        await LoadEgresos();
     }
 
-    private async Task Load()
+    private async Task LoadEgresos()
     {
-        var responseHppt = await repository.GetAsync<List<Egresos>>("/api/Egresos");
-        Egresos = responseHppt.Response!;
+        var responseHttp = await repository.GetAsync<List<Egresos>>("/api/Egresos");
+        if (responseHttp.Error)
+        {
+            var mensajeError = await responseHttp.GetErrorMessageAsync();
+            await swal.FireAsync("Error", $"No se pudieron cargar los egresos: {mensajeError}", SweetAlertIcon.Error);
+            listaEgresos = new List<Egresos>();
+        }
+        else
+        {
+            listaEgresos = responseHttp.Response ?? new List<Egresos>();
+        }
     }
 
-    private async Task DeleteAsync(Egresos Egresos)
+    private async Task DeleteAsync(Egresos egresoParaBorrar)
     {
         var result = await swal.FireAsync(new SweetAlertOptions
         {
             Title = "Confirmación",
-            Text = "¿Esta seguro que quieres borrar el registro?",
-            Icon = SweetAlertIcon.Question,
-            ShowCancelButton = true
+            Text = $"¿Estás seguro de que quieres borrar el egreso de {egresoParaBorrar.Egreso:C} del {egresoParaBorrar.Fecha:dd/MM/yyyy}?",
+            Icon = SweetAlertIcon.Warning,
+            ShowCancelButton = true,
+            ConfirmButtonText = "Sí, borrar",
+            CancelButtonText = "Cancelar"
         });
 
-        var confirm = string.IsNullOrEmpty(result.Value);
-
-        if (confirm)
+        if (result.Value == null && !result.IsConfirmed)
         {
             return;
         }
 
-        var responseHTTP = await repository.DeleteAsync($"api/Egresos/{Egresos.Id}");
+        var responseHTTP = await repository.DeleteAsync($"api/Egresos/{egresoParaBorrar.Id}");
 
         if (responseHTTP.Error)
         {
-            if (responseHTTP.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                navigationManager.NavigateTo("/");
-            }
-            else
-            {
-                var mensajeError = await responseHTTP.GetErrorMessageAsync();
-                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
-            }
+            var mensajeError = await responseHTTP.GetErrorMessageAsync();
+            await swal.FireAsync("Error", $"No se pudo borrar el egreso: {mensajeError}", SweetAlertIcon.Error);
         }
         else
         {
-            await Load();
+            await swal.FireAsync("Eliminado", "El egreso ha sido eliminado.", SweetAlertIcon.Success);
+            await LoadEgresos();
         }
     }
 }
