@@ -11,8 +11,9 @@ namespace Spendnt.Shared.Entities
 {
     public class Saldo
     {
-        public int Id { get; set; }
+        private decimal? _totalSaldoManual;
 
+        public int Id { get; set; }
         public ICollection<Ingresos> Ingresos { get; set; } = new List<Ingresos>();
         public ICollection<Egresos> Egresos { get; set; } = new List<Egresos>();
 
@@ -23,6 +24,13 @@ namespace Spendnt.Shared.Entities
         public decimal TotalEgresos => Egresos?.Sum(e => e.Egreso) ?? 0;
 
         [NotMapped]
-        public decimal TotalSaldo => TotalIngresos - TotalEgresos;
+        public decimal TotalSaldoCalculado => TotalIngresos - TotalEgresos;
+
+        [NotMapped]
+        public decimal TotalSaldo
+        {
+            get => _totalSaldoManual ?? TotalSaldoCalculado;
+            set => _totalSaldoManual = value;
+        }
     }
 }

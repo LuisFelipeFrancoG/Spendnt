@@ -13,7 +13,7 @@ namespace Spendnt.API.Data
 
         }
 
-        public DbSet<Saldo> Saldos { get; set; }
+        public DbSet<Saldo> Saldo { get; set; }
 
         public DbSet<Ingresos> Ingresos { get; set; }
 

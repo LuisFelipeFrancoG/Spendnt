@@ -1,0 +1,31 @@
+﻿@using Spendnt.Shared.Entities
+@inject NavigationManager Navigation
+
+<EditForm Model="Saldo" OnSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <div class="mb-3">
+            <label>TotalSaldo</label>
+            <div>
+                <InputNumber @bind-Value="Saldo.TotalSaldo" />
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" type="submit">Guardar</button>
+    <button class="btn btn-success" @onclick="ReturnAction">Regresar</button>
+</EditForm>
+
+@code {
+    [EditorRequired]
+    [Parameter]
+    public Saldo Saldo { get; set; }
+
+    [EditorRequired]
+    [Parameter]
+    public EventCallback<EditContext> OnSubmit { get; set; }
+
+    [EditorRequired]
+    [Parameter]
+    public EventCallback ReturnAction { get; set; }
+}

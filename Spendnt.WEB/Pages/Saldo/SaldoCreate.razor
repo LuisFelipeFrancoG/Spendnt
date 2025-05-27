@@ -1,0 +1,35 @@
+﻿@using CurrieTechnologies.Razor.SweetAlert2
+@using Spendnt.Shared.Entities
+@using Spendnt.WEB.Repositories
+@page "/saldo/create"
+@inject IRepository repository
+@inject NavigationManager navigationManager
+@inject SweetAlertService sweetAlertService
+
+<h3>Crear Saldo</h3>
+
+<SaldoForm @ref="saldoForm" Saldo="Saldo" OnSubmit="Create" ReturnAction="Return" />
+
+@code {
+    public Saldo Saldo = new();
+    public SaldoForm saldoForm;
+
+    private async Task Create(EditContext context)
+    {
+        var responseHttp = await repository.PostAsync("/api/Saldo", Saldo);
+        if (responseHttp.Error)
+        {
+            var mensaje = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", mensaje);
+            return;
+        }
+
+        await sweetAlertService.FireAsync("Éxito", "Saldo creado correctamente");
+        navigationManager.NavigateTo("/Saldos");
+    }
+
+    private void Return()
+    {
+        navigationManager.NavigateTo("/Saldos");
+    }
+}

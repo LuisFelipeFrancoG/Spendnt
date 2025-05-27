@@ -12,6 +12,6 @@ namespace Spendnt.Shared.Entities
         public string Titulo { get; set; }
         public decimal MontoEstimado { get; set; }
         public DateTime FechaProgramada { get; set; }
-        public string? Notas { get; set; }
+        public string Notas { get; set; }
     }
 }

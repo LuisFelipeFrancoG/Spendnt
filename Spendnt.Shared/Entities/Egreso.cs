@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Spendnt.Shared.Entities
 {
@@ -28,21 +24,12 @@ namespace Spendnt.Shared.Entities
         public int CategoriaId { get; set; }
 
         [JsonIgnore]
+        [Display(Name = "Nombre de Categoría")]
         public Categoria Categoria { get; set; }
 
-        [NotMapped]
-        [Required(ErrorMessage = "El nombre de la categoría es requerido para el formulario.")]
-        [StringLength(100, ErrorMessage = "El nombre de la categoría no puede exceder los 100 caracteres.")]
-        [Display(Name = "Nombre de Categoría (para formulario)")]
-        public string NombreCategoria { get; set; } = string.Empty;
-
-        [Required]
         public int SaldoId { get; set; }
 
         [JsonIgnore]
         public Saldo Saldo { get; set; }
-
-
-
     }
 }
