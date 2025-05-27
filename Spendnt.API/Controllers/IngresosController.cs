@@ -60,60 +60,93 @@ namespace Spendnt.API.Controllers
 
         //Insertar datos o crear registros
         [HttpPost]
-
-        public async Task<ActionResult> Post(Ingresos ingresos)
+        public async Task<ActionResult<Ingresos>> Post(Ingresos ingresos) 
         {
+            var saldoPrincipal = await _context.Saldo.FirstOrDefaultAsync();
+
+            if (saldoPrincipal == null)
+            {
+                return BadRequest("Error crítico: No se encontró un saldo principal en la base de datos para asociar el ingreso.");
+            }
+
+            ingresos.SaldoId = saldoPrincipal.Id;
 
             _context.Ingresos.Add(ingresos);
 
-            await _context.SaveChangesAsync();
-            return Ok(ingresos); //200
-
-
-
-
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Ocurrió un error al guardar el ingreso. Revise los datos e intente de nuevo.");
+            }
+            return Ok(ingresos); 
         }
 
 
         //Actualizar o modificar datos
 
-        [HttpPut]
-
-        public async Task<ActionResult> Put(Ingresos ingresos)
+        [HttpPut("{id:int}")] 
+        public async Task<IActionResult> Put(int id, Ingresos ingresos)
         {
+            if (id != ingresos.Id)
+            {
+                return BadRequest("El ID del ingreso en la ruta no coincide con el ID en el cuerpo de la solicitud.");
+            }
 
-            _context.Ingresos.Update(ingresos);
+            var saldoPrincipal = await _context.Saldo.FirstOrDefaultAsync();
+            if (saldoPrincipal == null)
+            {
+                return BadRequest("Error crítico: No se encontró un saldo principal en la base de datos.");
+            }
+            if (ingresos.SaldoId == 0)
+            {
+                ingresos.SaldoId = saldoPrincipal.Id;
+            }
+            else if (ingresos.SaldoId != saldoPrincipal.Id)
+            {
+            }
 
-            await _context.SaveChangesAsync();
-            return Ok(ingresos);
+            _context.Entry(ingresos).State = EntityState.Modified;
 
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _context.Ingresos.AnyAsync(e => e.Id == id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Ocurrió un error al actualizar el ingreso.");
+            }
+
+            return NoContent(); 
         }
 
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-
-            var filasafectadas = await _context.Ingresos
-
-               .Where(x => x.Id == id)
-               .ExecuteDeleteAsync();
-
-
-
-
-
-
-            if (filasafectadas == 0)
+            var ingreso = await _context.Ingresos.FindAsync(id);
+            if (ingreso == null)
             {
-
-
-
-                return NotFound();//404
+                return NotFound();
             }
 
-            return NoContent();//204
+            _context.Ingresos.Remove(ingreso);
+            await _context.SaveChangesAsync();
 
+            return NoContent();
         }
 
 

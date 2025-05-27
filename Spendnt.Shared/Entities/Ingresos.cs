@@ -19,7 +19,7 @@ namespace Spendnt.Shared.Entities
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy HH:mm}", ApplyFormatInEditMode = true)]
         public DateTime Fecha { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Por favor, seleccione una categoría.")]
         [Display(Name = "Categoría")]
         public int CategoriaId { get; set; }
 

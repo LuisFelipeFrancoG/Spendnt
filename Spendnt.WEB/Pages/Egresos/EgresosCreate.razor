@@ -11,14 +11,37 @@
 
 <h3>EgresosCreate</h3>
 
-<EgresosForm @ref="egresosForm" Egresos="Egresos" OnSubmit="Create" ReturnAction="Return" />
+<EgresosForm @ref="egresosForm" Egresos="Egresos" OnSubmit="Create" ReturnAction="Return" Categorias="listaCategorias" />
 
 
 @code {
     public Egresos Egresos = new();
     public EgresosForm egresosForm;
+    private List<Categoria> listaCategorias = new();
 
+    protected override async Task OnInitializedAsync()
+    {
 
+        if (Egresos.Fecha == DateTime.MinValue)
+        {
+            Egresos.Fecha = DateTime.Today;
+        }
+        await CargarCategorias();
+    }
+
+    private async Task CargarCategorias()
+    {
+        var responseHttp = await repository.GetAsync<List<Categoria>>("/api/Categorias");
+        if (responseHttp.Error)
+        {
+            var mensaje = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", $"No se pudieron cargar las categorías: {mensaje}");
+        }
+        else
+        {
+            listaCategorias = responseHttp.Response;
+        }
+    }
 
     private async Task Create()
     {

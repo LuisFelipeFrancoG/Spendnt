@@ -11,14 +11,37 @@
 
 <h3>IngresosCreate</h3>
 
-<IngresosForm @ref="ingresosForm" Ingresos="Ingresos" OnSubmit="Create" ReturnAction="Return" />
+<IngresosForm @ref="ingresosForm" Ingresos="Ingresos" OnSubmit="Create" ReturnAction="Return" Categorias="listaCategorias" />
 
 
 @code {
     public Ingresos Ingresos = new();
     public IngresosForm ingresosForm;
+    private List<Categoria> listaCategorias = new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        
+        if (Ingresos.Fecha == DateTime.MinValue) 
+        {
+            Ingresos.Fecha = DateTime.Today;
+        }
+        await CargarCategorias();
+    }
 
+    private async Task CargarCategorias()
+    {
+        var responseHttp = await repository.GetAsync<List<Categoria>>("/api/Categorias");
+        if (responseHttp.Error)
+        {
+            var mensaje = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", $"No se pudieron cargar las categorías: {mensaje}");
+        }
+        else
+        {
+            listaCategorias = responseHttp.Response;
+        }
+    }
 
     private async Task Create()
     {

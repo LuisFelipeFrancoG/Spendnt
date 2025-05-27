@@ -25,97 +25,37 @@ namespace Spendnt.API.Controllers
         // Get para obtoner una lista de resultados
         // Select * from table
 
-        [HttpGet]
-        public async Task<ActionResult> Get()
+        
+        [HttpGet("actual")] 
+        public async Task<ActionResult<Saldo>> GetCurrentSaldo()
         {
+            var saldo = await _context.Saldo
+                                .Include(s => s.Ingresos)  
+                                .Include(s => s.Egresos)  
+                                .FirstOrDefaultAsync();   
 
-
-            return Ok(await _context.Saldo.ToListAsync()); //200
-
+            if (saldo == null)
+            {
+                return NotFound("No se encontró el registro de saldo principal.");
+            }
+            return Ok(saldo);
         }
 
-
-
-        //Get por parámetro
-        //Select* from table Where Id=...
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult> Get(int id)
+        public async Task<ActionResult<Saldo>> GetSaldoById(int id) 
         {
+            var saldo = await _context.Saldo
+                                .Include(s => s.Ingresos)
+                                .Include(s => s.Egresos)
+                                .FirstOrDefaultAsync(x => x.Id == id);
 
-            var owner = await _context.Saldo.FirstOrDefaultAsync(x => x.Id == id);
-
-            if (owner == null)
+            if (saldo == null)
             {
-
-
-
-                return NotFound();//404
+                return NotFound();
             }
-
-            return Ok(owner); //200
-
-        }
-
-
-        //Insertar datos o crear registros
-        [HttpPost]
-
-        public async Task<ActionResult> Post(Saldo saldo)
-        {
-
-            _context.Saldo.Add(saldo);
-
-            await _context.SaveChangesAsync();
-            return Ok(saldo); //200
-
-
-
-
-        }
-
-
-        //Actualizar o modificar datos
-
-        [HttpPut]
-
-        public async Task<ActionResult> Put(Saldo saldo)
-        {
-
-            _context.Saldo.Update(saldo);
-
-            await _context.SaveChangesAsync();
             return Ok(saldo);
-
         }
-
-
-        [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
-        {
-
-            var filasafectadas = await _context.Saldo
-
-               .Where(x => x.Id == id)
-               .ExecuteDeleteAsync();
-
-
-
-
-
-
-            if (filasafectadas == 0)
-            {
-
-
-
-                return NotFound();//404
-            }
-
-            return NoContent();//204
-
-        }
-
 
 
 

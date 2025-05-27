@@ -60,60 +60,86 @@ namespace Spendnt.API.Controllers
 
         //Insertar datos o crear registros
         [HttpPost]
-
-        public async Task<ActionResult> Post(Egresos egresos)
+        public async Task<ActionResult<Egresos>> Post(Egresos egresos)
         {
+            var saldoPrincipal = await _context.Saldo.FirstOrDefaultAsync();
+            if (saldoPrincipal == null)
+            {
+                return BadRequest("Error crítico: No se encontró un saldo principal en la base de datos para asociar el egreso.");
+            }
+            egresos.SaldoId = saldoPrincipal.Id;
 
             _context.Egresos.Add(egresos);
-
-            await _context.SaveChangesAsync();
-            return Ok(egresos); //200
-
-
-
-
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Ocurrió un error al guardar el egreso.");
+            }
+            return Ok(egresos);
         }
 
 
         //Actualizar o modificar datos
 
-        [HttpPut]
-
-        public async Task<ActionResult> Put(Egresos egresos)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Put(int id, Egresos egresos)
         {
+            if (id != egresos.Id)
+            {
+                return BadRequest();
+            }
 
-            _context.Egresos.Update(egresos);
+            var saldoPrincipal = await _context.Saldo.FirstOrDefaultAsync();
+            if (saldoPrincipal == null)
+            {
+                return BadRequest("Error crítico: No se encontró un saldo principal en la base de datos.");
+            }
+            if (egresos.SaldoId == 0)
+            {
+                egresos.SaldoId = saldoPrincipal.Id;
+            }
 
-            await _context.SaveChangesAsync();
-            return Ok(egresos);
+            _context.Entry(egresos).State = EntityState.Modified;
 
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _context.Egresos.AnyAsync(e => e.Id == id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Ocurrió un error al actualizar el egreso.");
+            }
+            return NoContent();
         }
 
 
+
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-
             var filasafectadas = await _context.Egresos
-
                .Where(x => x.Id == id)
                .ExecuteDeleteAsync();
 
-
-
-
-
-
             if (filasafectadas == 0)
             {
-
-
-
-                return NotFound();//404
+                return NotFound();
             }
-
-            return NoContent();//204
-
+            return NoContent();
         }
 
 

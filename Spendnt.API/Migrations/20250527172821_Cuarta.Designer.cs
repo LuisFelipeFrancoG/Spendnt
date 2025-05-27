@@ -12,7 +12,7 @@ using Spendnt.API.Data;
 namespace Spendnt.API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250527161454_Cuarta")]
+    [Migration("20250527172821_Cuarta")]
     partial class Cuarta
     {
         /// <inheritdoc />
