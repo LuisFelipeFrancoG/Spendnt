@@ -1,0 +1,61 @@
+﻿@using Spendnt.Shared.Entities
+@inject NavigationManager Navigation
+
+<EditForm Model="Egresos" OnSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Egreso</label>
+        <div>
+            <InputNumber class="form-control" @bind-Value="Egresos.Egreso" />
+            <ValidationMessage For="@(() => Egresos.Egreso)" />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha</label>
+        <div>
+            <InputDate class="form-control" @bind-Value="Egresos.Fecha" />
+            <ValidationMessage For="@(() => Egresos.Fecha)" />
+        </div>
+    </div>
+
+
+    <div class="mb-3">
+        <label class="form-label">Categoría</label>
+        <div>
+            <InputSelect class="form-control" @bind-Value="Egresos.CategoriaId">
+                <option value="">-- Seleccione una categoría --</option>
+                @if (Categorias != null)
+                {
+                    @foreach (var categoria in Categorias)
+                    {
+                        <option value="@categoria.Id">@categoria.Nombre</option>
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => Egresos.CategoriaId)" />
+        </div>
+    </div>
+
+    <button class="btn btn-primary" type="submit">Guardar</button>
+    <button class="btn btn-success" type="button" @onclick="ReturnAction">Regresar</button>
+</EditForm>
+
+@code {
+    [EditorRequired]
+    [Parameter]
+    public Egresos Egresos { get; set; }
+
+    [Parameter]
+    public List<Categoria> Categorias { get; set; } = new();
+
+    [EditorRequired]
+    [Parameter]
+    public EventCallback<EditContext> OnSubmit { get; set; }
+
+    [EditorRequired]
+    [Parameter]
+    public EventCallback ReturnAction { get; set; }
+}

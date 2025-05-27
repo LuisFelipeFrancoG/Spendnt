@@ -33,10 +33,20 @@ namespace Spendnt.API.Migrations
                     b.Property<string>("Descripcion")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("EgresosId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("IngresosId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Nombre")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EgresosId");
+
+                    b.HasIndex("IngresosId");
 
                     b.ToTable("Categorias");
                 });
@@ -63,8 +73,6 @@ namespace Spendnt.API.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CategoriaId");
 
                     b.HasIndex("SaldoId");
 
@@ -125,8 +133,6 @@ namespace Spendnt.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoriaId");
-
                     b.HasIndex("SaldoId");
 
                     b.ToTable("Ingresos");
@@ -171,21 +177,24 @@ namespace Spendnt.API.Migrations
                     b.ToTable("Saldo");
                 });
 
+            modelBuilder.Entity("Spendnt.Shared.Entities.Categoria", b =>
+                {
+                    b.HasOne("Spendnt.Shared.Entities.Egresos", null)
+                        .WithMany("Categorias")
+                        .HasForeignKey("EgresosId");
+
+                    b.HasOne("Spendnt.Shared.Entities.Ingresos", null)
+                        .WithMany("Categorias")
+                        .HasForeignKey("IngresosId");
+                });
+
             modelBuilder.Entity("Spendnt.Shared.Entities.Egresos", b =>
                 {
-                    b.HasOne("Spendnt.Shared.Entities.Categoria", "Categoria")
-                        .WithMany()
-                        .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Spendnt.Shared.Entities.Saldo", "Saldo")
                         .WithMany("Egresos")
                         .HasForeignKey("SaldoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Categoria");
 
                     b.Navigation("Saldo");
                 });
@@ -203,21 +212,23 @@ namespace Spendnt.API.Migrations
 
             modelBuilder.Entity("Spendnt.Shared.Entities.Ingresos", b =>
                 {
-                    b.HasOne("Spendnt.Shared.Entities.Categoria", "Categoria")
-                        .WithMany()
-                        .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Spendnt.Shared.Entities.Saldo", "Saldo")
                         .WithMany("Ingresos")
                         .HasForeignKey("SaldoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Categoria");
-
                     b.Navigation("Saldo");
+                });
+
+            modelBuilder.Entity("Spendnt.Shared.Entities.Egresos", b =>
+                {
+                    b.Navigation("Categorias");
+                });
+
+            modelBuilder.Entity("Spendnt.Shared.Entities.Ingresos", b =>
+                {
+                    b.Navigation("Categorias");
                 });
 
             modelBuilder.Entity("Spendnt.Shared.Entities.Saldo", b =>

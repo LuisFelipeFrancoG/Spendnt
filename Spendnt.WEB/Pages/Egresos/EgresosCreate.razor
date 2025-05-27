@@ -1,0 +1,49 @@
+﻿@using CurrieTechnologies.Razor.SweetAlert2
+@using Spendnt.Shared.Entities
+@using Spendnt.WEB.Repositories
+
+@page "/Egresos/create"
+
+@inject IRepository repository
+@inject NavigationManager navigationManager
+@inject SweetAlertService sweetAlertService
+
+
+<h3>EgresosCreate</h3>
+
+<EgresosForm @ref="egresosForm" Egresos="Egresos" OnSubmit="Create" ReturnAction="Return" />
+
+
+@code {
+    public Egresos Egresos = new();
+    public EgresosForm egresosForm;
+
+
+
+    private async Task Create()
+    {
+
+        var responseHttp = await repository.PostAsync("/api/Egresos", Egresos);
+        if (responseHttp.Error)
+        {
+
+            var mensaje = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", mensaje);
+            return;
+
+
+        }
+        navigationManager.NavigateTo("/Egresos");
+
+    }
+
+
+
+    private void Return(){
+
+        navigationManager.NavigateTo("/Egresos");
+
+
+
+    }
+}
