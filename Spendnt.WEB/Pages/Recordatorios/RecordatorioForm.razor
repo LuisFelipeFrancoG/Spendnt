@@ -1,0 +1,34 @@
+﻿@using Spendnt.Shared.Entities
+@using Spendnt.Shared.Entities
+
+<EditForm Model="Recordatorio" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Título</label>
+        <InputText class="form-control" @bind-Value="Recordatorio.Titulo" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha Programada</label>
+        <InputDate class="form-control" @bind-Value="Recordatorio.FechaProgramada" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Monto Estimado</label>
+        <InputNumber class="form-control" @bind-Value="Recordatorio.MontoEstimado" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Notas</label>
+        <InputTextArea class="form-control" @bind-Value="Recordatorio.Notas" />
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+</EditForm>
+
+@code {
+    [Parameter] public RecordatorioGasto Recordatorio { get; set; } = new();
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+}

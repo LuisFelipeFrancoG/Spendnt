@@ -1,0 +1,33 @@
+﻿@page "/categorias/edit/{Id:int}"
+@using Spendnt.Shared.Entities
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<h3>Editar Categoría</h3>
+
+@if (categoria == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <CategoriaForm Model="categoria" OnValidSubmit="Guardar" />
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Categoria? categoria;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categoria = await Http.GetFromJsonAsync<Categoria>($"api/categorias/{Id}");
+    }
+
+    private async Task Guardar()
+    {
+        await Http.PutAsJsonAsync("api/categorias", categoria!);
+        Navigation.NavigateTo("/categorias");
+    }
+}

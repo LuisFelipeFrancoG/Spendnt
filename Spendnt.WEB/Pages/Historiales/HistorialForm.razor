@@ -1,0 +1,39 @@
+﻿@using Spendnt.Shared.Entities
+<EditForm Model="Historial" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Fecha</label>
+        <InputDate class="form-control" @bind-Value="Historial.Fecha" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Monto</label>
+        <InputNumber class="form-control" @bind-Value="Historial.Monto" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Tipo</label>
+        <InputText class="form-control" @bind-Value="Historial.Tipo" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Categoría</label>
+        <InputSelect class="form-control" @bind-Value="Historial.CategoriaId">
+            <option value="">-- Seleccione --</option>
+            @foreach (var cat in Categorias)
+            {
+                <option value="@cat.Id">@cat.Nombre</option>
+            }
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+</EditForm>
+
+@code {
+    [Parameter] public Historial Historial { get; set; } = new();
+    [Parameter] public List<Categoria> Categorias { get; set; } = new();
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+}

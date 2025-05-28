@@ -1,0 +1,24 @@
+﻿@page "/historiales/create"
+@inject HttpClient http
+@inject NavigationManager navigation
+@using Spendnt.Shared.Entities
+
+<h3>Registrar Transacción</h3>
+
+<HistorialForm Historial="historial" Categorias="categorias" OnValidSubmit="Guardar" />
+
+@code {
+    private Historial historial = new();
+    private List<Categoria> categorias = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        categorias = await http.GetFromJsonAsync<List<Categoria>>("api/Categorias");
+    }
+
+    private async Task Guardar()
+    {
+        await http.PostAsJsonAsync("api/Historiales", historial);
+        navigation.NavigateTo("/historiales");
+    }
+}

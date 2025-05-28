@@ -1,0 +1,43 @@
+﻿@page "/categorias"
+@using Spendnt.Shared.Entities
+@inject HttpClient Http
+
+<h3>Categorías</h3>
+
+<a href="/categorias/create" class="btn btn-primary mb-3">Nueva Categoría</a>
+
+@if (categorias == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var categoria in categorias)
+            {
+                <tr>
+                    <td>@categoria.Nombre</td>
+                    <td>
+                        <a class="btn btn-warning btn-sm" href="/categorias/edit/@categoria.Id">Editar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Categoria>? categorias;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categorias = await Http.GetFromJsonAsync<List<Categoria>>("api/categorias");
+    }
+}

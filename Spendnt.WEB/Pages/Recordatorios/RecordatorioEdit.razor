@@ -1,0 +1,25 @@
+﻿@page "/recordatorios/edit/{Id:int}"
+@inject HttpClient http
+@inject NavigationManager navigation
+@using Spendnt.Shared.Entities
+
+<h3>Editar Recordatorio</h3>
+
+<RecordatorioForm Recordatorio="recordatorio" OnValidSubmit="Guardar" />
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private RecordatorioGasto recordatorio = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        recordatorio = await http.GetFromJsonAsync<RecordatorioGasto>($"api/Recordatorios/{Id}");
+    }
+
+    private async Task Guardar()
+    {
+        await http.PutAsJsonAsync("api/Recordatorios", recordatorio);
+        navigation.NavigateTo("/recordatorios");
+    }
+}

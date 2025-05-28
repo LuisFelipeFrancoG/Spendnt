@@ -1,0 +1,26 @@
+﻿@page "/historiales/edit/{Id:int}"
+@inject HttpClient http
+@inject NavigationManager navigation
+@using Spendnt.Shared.Entities
+
+<h3>Editar Transacción</h3>
+
+<HistorialForm Historial="historial" Categorias="categorias" OnValidSubmit="Guardar" />
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Historial historial = new();
+    private List<Categoria> categorias = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        historial = await http.GetFromJsonAsync<Historial>($"api/Historiales/{Id}");
+        categorias = await http.GetFromJsonAsync<List<Categoria>>("api/Categorias");
+    }
+
+    private async Task Guardar()
+    {
+        await http.PutAsJsonAsync("api/Historiales", historial);
+        navigation.NavigateTo("/historiales");
+    }
+}

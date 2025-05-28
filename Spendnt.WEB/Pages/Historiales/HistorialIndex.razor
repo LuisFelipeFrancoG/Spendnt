@@ -1,0 +1,65 @@
+﻿@page "/historiales"
+@inject HttpClient http
+@using Spendnt.Shared.Entities
+
+<h3>Historial de Transacciones</h3>
+
+@if (historiales == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else if (!historiales.Any())
+{
+    <p>No hay movimientos registrados.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Monto</th>
+                <th>Tipo</th>
+                <th>Categoría</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in historiales)
+            {
+                <tr>
+                    <td>@item.Fecha.ToShortDateString()</td>
+                    <td>@item.Monto</td>
+                    <td>@item.Tipo</td>
+                    <td>@item.Categoria?.Nombre</td>
+                    <td>
+                        <a class="btn btn-primary btn-sm" href=$"/historiales/edit/{item.Id}">Editar</a>
+                        <button class="btn btn-danger btn-sm" @onclick="() => Eliminar(item.Id)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Historial>? historiales;
+
+    protected override async Task OnInitializedAsync()
+    {
+        historiales = await http.GetFromJsonAsync<List<Historial>>("api/Historiales");
+    }
+
+    private async Task Eliminar(int id)
+    {
+        var confirm = await js.InvokeAsync<bool>("confirm", "¿Estás seguro de eliminar este historial?");
+        if (confirm)
+        {
+            await http.DeleteAsync($"api/Historiales/{id}");
+            historiales = await http.GetFromJsonAsync<List<Historial>>("api/Historiales");
+        }
+    }
+
+    [Inject]
+    IJSRuntime js { get; set; } = default!;
+}

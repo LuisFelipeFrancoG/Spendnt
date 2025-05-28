@@ -1,0 +1,63 @@
+﻿@page "/recordatorios"
+@inject HttpClient http
+@inject IJSRuntime js
+@using Spendnt.Shared.Entities
+
+<h3>Recordatorios de Gasto</h3>
+
+@if (recordatorios == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else if (!recordatorios.Any())
+{
+    <p>No hay recordatorios registrados.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Fecha Programada</th>
+                <th>Monto Estimado</th>
+                <th>Notas</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var recordatorio in recordatorios)
+            {
+                <tr>
+                    <td>@recordatorio.Titulo</td>
+                    <td>@recordatorio.FechaProgramada.ToShortDateString()</td>
+                    <td>@recordatorio.MontoEstimado</td>
+                    <td>@recordatorio.Notas</td>
+                    <td>
+                        <a class="btn btn-primary btn-sm" href=$"/recordatorios/edit/{recordatorio.Id}">Editar</a>
+                        <button class="btn btn-danger btn-sm" @onclick="() => Eliminar(recordatorio.Id)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<RecordatorioGasto>? recordatorios;
+
+    protected override async Task OnInitializedAsync()
+    {
+        recordatorios = await http.GetFromJsonAsync<List<RecordatorioGasto>>("api/Recordatorios");
+    }
+
+    private async Task Eliminar(int id)
+    {
+        var confirm = await js.InvokeAsync<bool>("confirm", "¿Estás seguro de eliminar este recordatorio?");
+        if (confirm)
+        {
+            await http.DeleteAsync($"api/Recordatorios/{id}");
+            recordatorios = await http.GetFromJsonAsync<List<RecordatorioGasto>>("api/Recordatorios");
+        }
+    }
+}

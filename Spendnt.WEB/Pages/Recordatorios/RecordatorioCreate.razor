@@ -1,0 +1,18 @@
+﻿@page "/recordatorios/create"
+@inject HttpClient http
+@inject NavigationManager navigation
+@using Spendnt.Shared.Entities
+
+<h3>Crear Recordatorio</h3>
+
+<RecordatorioForm Recordatorio="recordatorio" OnValidSubmit="Guardar" />
+
+@code {
+    private RecordatorioGasto recordatorio = new();
+
+    private async Task Guardar()
+    {
+        await http.PostAsJsonAsync("api/Recordatorios", recordatorio);
+        navigation.NavigateTo("/recordatorios");
+    }
+}

@@ -18,47 +18,37 @@ namespace Spendnt.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> Get()
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Historial>>> GetHistoriales()
         {
-            return Ok(await _context.Historiales
-                .Include(h => h.Categoria)
-                .ToListAsync());
+            return await _context.Historiales.ToListAsync();
         }
 
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult> Get(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Historial>> GetHistorial(int id)
         {
-            var historial = await _context.Historiales
-                .Include(h => h.Categoria)
-                .FirstOrDefaultAsync(h => h.Id == id);
-            if (historial == null) return NotFound();
-            return Ok(historial);
+            var historial = await _context.Historiales.FindAsync(id);
+
+            if (historial == null)
+            {
+                return NotFound();
+            }
+
+            return historial;
         }
 
-        [HttpPost]
-        public async Task<ActionResult> Post(Historial historial)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteHistorial(int id)
         {
-            _context.Add(historial);
+            var historial = await _context.Historiales.FindAsync(id);
+            if (historial == null)
+            {
+                return NotFound();
+            }
+
+            _context.Historiales.Remove(historial);
             await _context.SaveChangesAsync();
-            return Ok(historial);
-        }
 
-        [HttpPut]
-        public async Task<ActionResult> Put(Historial historial)
-        {
-            _context.Update(historial);
-            await _context.SaveChangesAsync();
-            return Ok(historial);
-        }
-
-        [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
-        {
-            var historial = await _context.Historiales.FirstOrDefaultAsync(h => h.Id == id);
-            if (historial == null) return NotFound();
-
-            _context.Remove(historial);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
     }
