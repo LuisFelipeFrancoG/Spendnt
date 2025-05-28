@@ -18,6 +18,10 @@ namespace Spendnt.Shared.Entities
 
         public string FullName => $"{FirstName} {LastName}";
 
+       
+        [MaxLength(500)] 
+        public string? ProfilePictureUrl { get; set; } 
+
         [JsonIgnore]
         public virtual Saldo? SaldoPrincipal { get; set; }
 

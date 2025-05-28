@@ -1,26 +1,27 @@
-﻿.nav-item ::deep .nav-link,
-.nav-item .btn-logout-style {
-    color: rgba(255, 255, 255, 0.8) !important;
+﻿.nav-item > ::deep a.nav-link,
+.nav-item > .btn-logout-style {
+    color: rgba(255, 255, 255, 0.8);
     display: flex;
     align-items: center;
     text-decoration: none;
     padding: 0.65rem 1rem;
     border-radius: 4px;
     transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-    .nav-item ::deep .nav-link:hover,
-    .nav-item ::deep .nav-link.active,
-    .nav-item .btn-logout-style:hover,
-    .nav-item .btn-logout-style:focus {
-        color: white !important;
-        background-color: rgba(255, 255, 255, 0.15) !important;
+    .nav-item > ::deep a.nav-link:hover,
+    .nav-item > ::deep a.nav-link.active,
+    .nav-item > .btn-logout-style:hover,
+    .nav-item > .btn-logout-style:focus {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.15);
     }
 
 .btn-logout-style {
     background-color: transparent;
     border: none;
-    width: 100%;
     text-align: left;
     line-height: normal;
     cursor: pointer;
@@ -31,10 +32,40 @@
         box-shadow: none;
     }
 
-.nav-item ::deep .nav-link .bi,
-.nav-item .btn-logout-style .bi {
+.nav-item > ::deep a.nav-link .bi,
+.nav-item > .btn-logout-style .bi {
     font-size: 1.1rem;
     margin-right: 0.85rem;
-    vertical-align: middle;
-    color: inherit;
 }
+
+.nav-separator-top,
+.nav-separator-bottom {
+    border-color: rgba(255,255,255,0.1) !important;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.nav-separator-top {
+    margin-bottom: 0.25rem;
+}
+
+.nav-separator-bottom {
+    margin-top: 0.25rem;
+}
+
+.user-profile-section ::deep a.nav-link,
+.user-profile-section .user-name,
+.user-profile-section .view-profile-link {
+}
+
+    .user-profile-section ::deep a.nav-link.view-profile-link-style {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        justify-content: center;
+        color: rgba(255,255,255,.6);
+    }
+
+        .user-profile-section ::deep a.nav-link.view-profile-link-style:hover {
+            color: rgba(255,255,255,.9);
+            background-color: rgba(255,255,255,.1);
+        }
