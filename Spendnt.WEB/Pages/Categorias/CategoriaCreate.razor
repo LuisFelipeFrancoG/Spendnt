@@ -1,7 +1,11 @@
 ﻿@page "/categorias/create"
+@attribute [Authorize(Roles = "Admin")]
+
 @using Spendnt.Shared.Entities
+@using Microsoft.AspNetCore.Authorization
 @inject HttpClient Http
-@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+@inject CurrieTechnologies.Razor.SweetAlert2.SweetAlertService Swal
 
 <h3>Crear Categoría</h3>
 
@@ -12,7 +16,15 @@
 
     private async Task Guardar()
     {
-        await Http.PostAsJsonAsync("api/categorias", categoria);
-        Navigation.NavigateTo("/categorias");
+        var response = await Http.PostAsJsonAsync("api/categorias", categoria);
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/categorias");
+        }
+        else
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            await Swal.FireAsync("Error", $"No se pudo crear la categoría: {errorContent}", "error");
+        }
     }
 }

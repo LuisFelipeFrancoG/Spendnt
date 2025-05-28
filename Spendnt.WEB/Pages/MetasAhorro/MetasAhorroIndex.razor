@@ -1,9 +1,13 @@
 ﻿@page "/MetasAhorro"
+@attribute [Authorize]
+
 @using CurrieTechnologies.Razor.SweetAlert2
 @using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
 @using Spendnt.WEB.Shared
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Spendnt.WEB.Auth
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
@@ -17,7 +21,7 @@
 
 <GenericList MyList="listaMetasAhorro">
     <Loading>
-        <div class="d-flex justify-content-center">
+        <div class="d-flex justify-content-center my-3">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Cargando metas...</span>
             </div>
@@ -72,7 +76,9 @@
 </GenericList>
 
 @code {
-    private List<MetaAhorro> listaMetasAhorro;
+    private List<MetaAhorro>? listaMetasAhorro;
+    private bool isLoading = true;
+    private bool loadFailed = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -81,16 +87,39 @@
 
     private async Task LoadMetasAhorro()
     {
-        var responseHttp = await repository.GetAsync<List<MetaAhorro>>("/api/MetasAhorro");
-        if (responseHttp.Error)
+        isLoading = true;
+        loadFailed = false;
+        StateHasChanged();
+        try
         {
-            var mensajeError = await responseHttp.GetErrorMessageAsync();
-            await swal.FireAsync("Error", $"No se pudieron cargar las metas de ahorro: {mensajeError}", SweetAlertIcon.Error);
+            var responseHttp = await repository.GetAsync<List<MetaAhorro>>("/api/MetasAhorro");
+            if (responseHttp.Error)
+            {
+                loadFailed = true;
+                var mensajeError = await responseHttp.GetErrorMessageAsync();
+                await swal.FireAsync("Error", $"No se pudieron cargar las metas de ahorro: {mensajeError}", SweetAlertIcon.Error);
+                listaMetasAhorro = new List<MetaAhorro>();
+            }
+            else
+            {
+                listaMetasAhorro = responseHttp.Response ?? new List<MetaAhorro>();
+            }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            loadFailed = true;
+            exception.Redirect();
+        }
+        catch (Exception ex)
+        {
+            loadFailed = true;
+            await swal.FireAsync("Error", $"Error inesperado al cargar las metas de ahorro: {ex.Message}", SweetAlertIcon.Error);
             listaMetasAhorro = new List<MetaAhorro>();
         }
-        else
+        finally
         {
-            listaMetasAhorro = responseHttp.Response ?? new List<MetaAhorro>();
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -106,13 +135,12 @@
                 CancelButtonText = "Cancelar"
             });
 
-        if (result.Value == null && !result.IsConfirmed)
+        if (!result.IsConfirmed)
         {
             return;
         }
 
         var responseHTTP = await repository.DeleteAsync($"api/MetasAhorro/{metaParaBorrar.Id}");
-
         if (responseHTTP.Error)
         {
             var mensajeError = await responseHTTP.GetErrorMessageAsync();

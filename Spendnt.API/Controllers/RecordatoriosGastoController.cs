@@ -1,11 +1,17 @@
-﻿
+﻿// Spendnt.API/Controllers/RecordatoriosGastoController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Spendnt.API.Data;
 using Spendnt.Shared.Entities;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace Spendnt.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class RecordatoriosGastoController : ControllerBase
@@ -17,40 +23,84 @@ namespace Spendnt.API.Controllers
             _context = context;
         }
 
+        private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         [HttpGet]
-        public async Task<ActionResult> Get()
+        public async Task<ActionResult<IEnumerable<RecordatorioGasto>>> Get()
         {
-            return Ok(await _context.RecordatoriosGasto.ToListAsync());
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            return Ok(await _context.RecordatoriosGasto
+                                 .Where(r => r.UserId == userId)
+                                 .OrderBy(r => r.FechaProgramada)
+                                 .ToListAsync());
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult> Get(int id)
+        public async Task<ActionResult<RecordatorioGasto>> Get(int id)
         {
-            var recordatorio = await _context.RecordatoriosGasto.FirstOrDefaultAsync(r => r.Id == id);
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var recordatorio = await _context.RecordatoriosGasto
+                                           .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+
             if (recordatorio == null) return NotFound();
             return Ok(recordatorio);
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(RecordatorioGasto recordatorio)
+        public async Task<ActionResult<RecordatorioGasto>> Post(RecordatorioGasto recordatorio)
         {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            recordatorio.UserId = userId;
+
             _context.Add(recordatorio);
             await _context.SaveChangesAsync();
-            return Ok(recordatorio);
+            return CreatedAtAction(nameof(Get), new { id = recordatorio.Id }, recordatorio);
         }
 
-        [HttpPut]
-        public async Task<ActionResult> Put(RecordatorioGasto recordatorio)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Put(int id, RecordatorioGasto recordatorio)
         {
-            _context.Update(recordatorio);
-            await _context.SaveChangesAsync();
-            return Ok(recordatorio);
+            if (id != recordatorio.Id)
+            {
+                return BadRequest("El ID del recordatorio en la ruta no coincide con el del cuerpo.");
+            }
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var existingRecordatorio = await _context.RecordatoriosGasto
+                                                .AsNoTracking()
+                                                .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+            if (existingRecordatorio == null)
+            {
+                return NotFound("Recordatorio no encontrado o no pertenece al usuario.");
+            }
+            recordatorio.UserId = userId;
+            _context.Entry(recordatorio).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _context.RecordatoriosGasto.AnyAsync(e => e.Id == id)) return NotFound();
+                else throw;
+            }
+            return NoContent();
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var recordatorio = await _context.RecordatoriosGasto.FirstOrDefaultAsync(r => r.Id == id);
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var recordatorio = await _context.RecordatoriosGasto
+                                           .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
             if (recordatorio == null) return NotFound();
 
             _context.Remove(recordatorio);

@@ -1,9 +1,12 @@
 ﻿@page "/Ingresos"
+@attribute [Authorize]
+
 @using CurrieTechnologies.Razor.SweetAlert2
 @using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
-@using Spendnt.WEB.Shared 
-@using Microsoft.AspNetCore.Authorization 
+@using Spendnt.WEB.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
@@ -17,7 +20,7 @@
 
 <GenericList MyList="listaIngresos">
     <Loading>
-        <div class="d-flex justify-content-center">
+        <div class="d-flex justify-content-center my-3">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Cargando ingresos...</span>
             </div>
@@ -34,6 +37,7 @@
                 <tr>
                     <th>Monto</th>
                     <th>Fecha</th>
+                    <th>Categoría</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -43,7 +47,7 @@
                     <tr>
                         <td>@ingresoItem.Ingreso.ToString("C")</td>
                         <td>@ingresoItem.Fecha.ToString("dd/MM/yyyy")</td>
-                        
+                        <td>@ingresoItem.Categoria?.Nombre</td>
                         <td>
                             <a href="/Ingresos/edit/@ingresoItem.Id" class="btn btn-warning btn-sm me-1" title="Editar"><i class="bi bi-pencil-square"></i></a>
                             <button class="btn btn-danger btn-sm" @onclick=@(() => DeleteAsync(ingresoItem)) title="Borrar"><i class="bi bi-trash3-fill"></i></button>
@@ -56,7 +60,9 @@
 </GenericList>
 
 @code {
-    private List<Ingresos> listaIngresos;
+    private List<Ingresos>? listaIngresos;
+    private bool isLoading = true;
+    private bool loadFailed = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -65,33 +71,56 @@
 
     private async Task LoadIngresos()
     {
+        isLoading = true;
+        loadFailed = false;
+        StateHasChanged();
 
-        var responseHttp = await repository.GetAsync<List<Ingresos>>("/api/Ingresos");
-        if (responseHttp.Error)
+        try
         {
-            var mensajeError = await responseHttp.GetErrorMessageAsync();
-            await swal.FireAsync("Error", $"No se pudieron cargar los ingresos: {mensajeError}", SweetAlertIcon.Error);
-            listaIngresos = new List<Ingresos>(); 
+            var responseHttp = await repository.GetAsync<List<Ingresos>>("/api/Ingresos");
+            if (responseHttp.Error)
+            {
+                loadFailed = true;
+                var mensajeError = await responseHttp.GetErrorMessageAsync();
+                await swal.FireAsync("Error", $"No se pudieron cargar los ingresos: {mensajeError}", SweetAlertIcon.Error);
+                listaIngresos = new List<Ingresos>();
+            }
+            else
+            {
+                listaIngresos = responseHttp.Response ?? new List<Ingresos>();
+            }
         }
-        else
+        catch (AccessTokenNotAvailableException exception)
         {
-            listaIngresos = responseHttp.Response ?? new List<Ingresos>(); 
+            loadFailed = true;
+            exception.Redirect();
+        }
+        catch (Exception ex)
+        {
+            loadFailed = true;
+            await swal.FireAsync("Error", $"Error inesperado al cargar ingresos: {ex.Message}", SweetAlertIcon.Error);
+            listaIngresos = new List<Ingresos>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
     private async Task DeleteAsync(Ingresos ingresoParaBorrar)
     {
         var result = await swal.FireAsync(new SweetAlertOptions
-        {
-            Title = "Confirmación",
-            Text = $"¿Estás seguro de que quieres borrar el ingreso de {ingresoParaBorrar.Ingreso:C} del {ingresoParaBorrar.Fecha:dd/MM/yyyy}?",
-            Icon = SweetAlertIcon.Warning,
-            ShowCancelButton = true,
-            ConfirmButtonText = "Sí, borrar",
-            CancelButtonText = "Cancelar"
-        });
+            {
+                Title = "Confirmación",
+                Text = $"¿Estás seguro de que quieres borrar el ingreso de {ingresoParaBorrar.Ingreso:C} del {ingresoParaBorrar.Fecha:dd/MM/yyyy}?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, borrar",
+                CancelButtonText = "Cancelar"
+            });
 
-        if (result.Value == null && !result.IsConfirmed)
+        if (!result.IsConfirmed)
         {
             return;
         }

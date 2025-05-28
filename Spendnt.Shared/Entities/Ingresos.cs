@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Spendnt.Shared/Entities/Ingresos.cs
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
@@ -11,6 +12,7 @@ namespace Spendnt.Shared.Entities
 
         [Required]
         [Display(Name = "Ingreso")]
+        [Column(TypeName = "decimal(18,2)")] 
         [Range(0.01, double.MaxValue)]
         public decimal Ingreso { get; set; }
 
@@ -24,12 +26,14 @@ namespace Spendnt.Shared.Entities
         public int CategoriaId { get; set; }
 
         [JsonIgnore]
-        [Display(Name = "Nombre de Categoría")]
-        public List<Categoria> Categorias { get; set; }
+   
+        public virtual Categoria Categoria { get; set; }
 
+        [Required] 
         public int SaldoId { get; set; }
 
         [JsonIgnore]
-        public Saldo Saldo { get; set; }
+        [ForeignKey("SaldoId")] 
+        public virtual Saldo Saldo { get; set; }
     }
 }

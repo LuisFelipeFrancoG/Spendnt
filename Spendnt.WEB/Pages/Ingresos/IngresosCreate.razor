@@ -1,72 +1,81 @@
-﻿@using CurrieTechnologies.Razor.SweetAlert2
+﻿@page "/Ingresos/create"
+@attribute [Authorize]
+
 @using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
-
-@page "/Ingresos/create"
+@using CurrieTechnologies.Razor.SweetAlert2
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
 @inject SweetAlertService sweetAlertService
 
+<h3>Registrar Nuevo Ingreso</h3>
 
-<h3>IngresosCreate</h3>
-
-<IngresosForm @ref="ingresosForm" Ingresos="Ingresos" OnSubmit="Create" ReturnAction="Return" Categorias="listaCategorias" />
-
+<IngresosForm @ref="ingresosForm" Ingresos="ingresoModel" OnSubmit="Create" ReturnAction="Return" Categorias="listaCategorias" />
 
 @code {
-    public Ingresos Ingresos = new();
-    public IngresosForm ingresosForm;
+    private Ingresos ingresoModel = new();
+    private IngresosForm? ingresosForm;
     private List<Categoria> listaCategorias = new();
+    private bool isLoadingCategorias = true;
 
     protected override async Task OnInitializedAsync()
     {
-        
-        if (Ingresos.Fecha == DateTime.MinValue) 
+        if (ingresoModel.Fecha == DateTime.MinValue)
         {
-            Ingresos.Fecha = DateTime.Today;
+            ingresoModel.Fecha = DateTime.Today;
         }
         await CargarCategorias();
     }
 
     private async Task CargarCategorias()
     {
-        var responseHttp = await repository.GetAsync<List<Categoria>>("/api/Categorias");
-        if (responseHttp.Error)
+        isLoadingCategorias = true;
+        try
         {
-            var mensaje = await responseHttp.GetErrorMessageAsync();
-            await sweetAlertService.FireAsync("Error", $"No se pudieron cargar las categorías: {mensaje}");
+            var responseHttp = await repository.GetAsync<List<Categoria>>("/api/Categorias");
+            if (responseHttp.Error)
+            {
+                var mensaje = await responseHttp.GetErrorMessageAsync();
+                await sweetAlertService.FireAsync("Error", $"No se pudieron cargar las categorías: {mensaje}", SweetAlertIcon.Error);
+                listaCategorias = new List<Categoria>();
+            }
+            else
+            {
+                listaCategorias = responseHttp.Response ?? new List<Categoria>();
+            }
         }
-        else
+        catch (AccessTokenNotAvailableException exception)
         {
-            listaCategorias = responseHttp.Response;
+            exception.Redirect();
+        }
+        catch (Exception ex)
+        {
+            await sweetAlertService.FireAsync("Error", $"Error inesperado al cargar categorías: {ex.Message}", SweetAlertIcon.Error);
+            listaCategorias = new List<Categoria>();
+        }
+        finally
+        {
+            isLoadingCategorias = false;
         }
     }
 
     private async Task Create()
     {
-
-        var responseHttp = await repository.PostAsync("/api/Ingresos", Ingresos);
+        var responseHttp = await repository.PostAsync("/api/Ingresos", ingresoModel);
         if (responseHttp.Error)
         {
-
             var mensaje = await responseHttp.GetErrorMessageAsync();
-            await sweetAlertService.FireAsync("Error", mensaje);
+            await sweetAlertService.FireAsync("Error", mensaje, SweetAlertIcon.Error);
             return;
-
-
         }
         navigationManager.NavigateTo("/Ingresos");
-
     }
 
-
-
-    private void Return(){
-
+    private void Return()
+    {
         navigationManager.NavigateTo("/Ingresos");
-
-
-
     }
 }

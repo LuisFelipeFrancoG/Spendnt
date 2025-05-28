@@ -1,9 +1,9 @@
 ﻿@using Spendnt.Shared.Entities
-@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
 
 <EditForm Model="MetaAhorro" OnSubmit="OnSubmit">
     <DataAnnotationsValidator />
-    <ValidationSummary />
+    @* <ValidationSummary /> *@
 
     <div class="mb-3">
         <label class="form-label">Nombre de la Meta</label>
@@ -45,13 +45,10 @@
         </div>
     </div>
 
-    <div class="mb-3">
+    <div class="mb-3 form-check">
+        <InputCheckbox class="form-check-input" id="estaCompletada" @bind-Value="MetaAhorro.EstaCompletada" />
         <label class="form-check-label" for="estaCompletada">¿Meta Completada?</label>
-        <div>
-            <InputCheckbox class="form-check-input" id="estaCompletada" @bind-Value="MetaAhorro.EstaCompletada" />
-        </div>
     </div>
-
 
     <button class="btn btn-primary" type="submit">Guardar</button>
     <button class="btn btn-success" type="button" @onclick="ReturnAction">Regresar</button>
@@ -69,4 +66,12 @@
     [EditorRequired]
     [Parameter]
     public EventCallback ReturnAction { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (MetaAhorro != null && MetaAhorro.FechaCreacion == DateTime.MinValue)
+        {
+            MetaAhorro.FechaCreacion = DateTime.UtcNow;
+        }
+    }
 }

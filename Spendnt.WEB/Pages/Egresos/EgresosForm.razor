@@ -1,55 +1,78 @@
-﻿@using Spendnt.Shared.Entities
-@inject NavigationManager Navigation
+﻿@* Spendnt.WEB/Pages/Egresos/EgresosForm.razor *@
+@using Spendnt.Shared.Entities
+@using System.ComponentModel.DataAnnotations
 
 <EditForm Model="Egresos" OnSubmit="OnSubmit">
     <DataAnnotationsValidator />
-    <ValidationSummary />
+    @* <ValidationSummary /> *@
 
     <div class="mb-3">
-        <label class="form-label">Egreso</label>
+        <label for="egresoMonto" class="form-label">Monto del Egreso</label>
         <div>
-            <InputNumber class="form-control" @bind-Value="Egresos.Egreso" />
+            <InputNumber id="egresoMonto" class="form-control" @bind-Value="Egresos.Egreso" />
             <ValidationMessage For="@(() => Egresos.Egreso)" />
         </div>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Fecha</label>
+        <label for="egresoFecha" class="form-label">Fecha</label>
         <div>
-            <InputDate class="form-control" @bind-Value="Egresos.Fecha" />
+            <InputDate id="egresoFecha" class="form-control" @bind-Value="Egresos.Fecha" />
             <ValidationMessage For="@(() => Egresos.Fecha)" />
         </div>
     </div>
 
-
     <div class="mb-3">
-        <label class="form-label">Categoría</label>
+        <label for="egresoCategoria" class="form-label">Categoría</label>
         <div>
-            <InputSelect class="form-control" @bind-Value="Egresos.CategoriaId">
-                <option value="0">-- Seleccione una categoría --</option>
-                @if (Categorias != null)
-                {
-                    @foreach (var categoria in Categorias)
+            @if (Categorias == null)
+            {
+                <InputSelect id="egresoCategoria" class="form-control" disabled TValue="int">
+                    @* Añadido TValue aquí también por consistencia *@
+                    <option value="">-- Cargando categorías... --</option>
+                </InputSelect>
+            }
+            else
+            {
+                @* ESPECIFICAR TValue="int" AQUÍ *@
+                <InputSelect id="egresoCategoria" class="form-control" @bind-Value="Egresos.CategoriaId" TValue="int">
+                    <option value="0">-- Seleccione una categoría --</option>
+                    @if (Categorias.Any())
                     {
-                        <option value="@categoria.Id">@categoria.Nombre</option>
+                        @foreach (var categoria in Categorias)
+                        {
+                            <option value="@categoria.Id">@categoria.Nombre</option>
+                        }
                     }
-                }
-            </InputSelect>
-            <ValidationMessage For="@(() => Egresos.CategoriaId)" />
+                    else
+                    {
+                        <option value="" disabled>No hay categorías disponibles</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => Egresos.CategoriaId)" />
+            }
         </div>
     </div>
 
-    <button class="btn btn-primary" type="submit">Guardar</button>
-    <button class="btn btn-success" type="button" @onclick="ReturnAction">Regresar</button>
+   
+
+    <div class="mt-4">
+        <button class="btn btn-primary" type="submit">
+            <i class="bi bi-save me-1"></i> Guardar Egreso
+        </button>
+        <button class="btn btn-secondary" type="button" @onclick="ReturnAction">
+            <i class="bi bi-arrow-left-circle me-1"></i> Regresar
+        </button>
+    </div>
 </EditForm>
 
 @code {
     [EditorRequired]
     [Parameter]
-    public Egresos Egresos { get; set; }
+    public Egresos Egresos { get; set; } = new();
 
     [Parameter]
-    public List<Categoria> Categorias { get; set; } = new();
+    public List<Categoria>? Categorias { get; set; }
 
     [EditorRequired]
     [Parameter]
@@ -58,4 +81,12 @@
     [EditorRequired]
     [Parameter]
     public EventCallback ReturnAction { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Egresos != null && Egresos.Id == 0 && Egresos.Fecha == DateTime.MinValue)
+        {
+            Egresos.Fecha = DateTime.Today;
+        }
+    }
 }

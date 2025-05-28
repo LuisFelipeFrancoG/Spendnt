@@ -1,25 +1,26 @@
 ﻿@using Spendnt.Shared.Entities
-@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
 
 <EditForm Model="Saldo" OnSubmit="OnSubmit">
     <DataAnnotationsValidator />
+
     <div class="mb-3">
-        <div class="mb-3">
-            <label>TotalSaldo</label>
-            <div>
-                <InputNumber @bind-Value="Saldo.TotalSaldo" />
-            </div>
+        <label class="form-label">Establecer Saldo Manual</label>
+        <div>
+            <InputNumber class="form-control" @bind-Value="Saldo.TotalSaldo" TValue="decimal" />
+            <ValidationMessage For="@(() => Saldo.TotalSaldo)" />
+            
         </div>
     </div>
 
-    <button class="btn btn-primary" type="submit">Guardar</button>
-    <button class="btn btn-success" @onclick="ReturnAction">Regresar</button>
+    <button class="btn btn-primary" type="submit">Guardar Saldo Manual</button>
+    <button class="btn btn-success" type="button" @onclick="ReturnAction">Regresar</button>
 </EditForm>
 
 @code {
     [EditorRequired]
     [Parameter]
-    public Saldo Saldo { get; set; }
+    public Saldo Saldo { get; set; } = new();
 
     [EditorRequired]
     [Parameter]
