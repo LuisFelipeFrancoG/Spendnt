@@ -1,15 +1,19 @@
 ﻿@page "/Saldo"
+@attribute [Authorize]
+
 @using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using CurrieTechnologies.Razor.SweetAlert2
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
-
+@inject SweetAlertService Swal
 
 <h1>Saldo</h1>
 
-@if (isLoadingSaldo) // Usar una variable de carga específica
+@if (isLoadingSaldo)
 {
     <div class="d-flex justify-content-center my-3">
         <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
@@ -70,25 +74,25 @@ else if (saldoActual != null)
             <small>Última actualización al cargar esta página.</small>
             <div>
                 <a href="/Saldo/edit/@saldoActual.Id" class="btn btn-sm btn-outline-warning me-2"><i class="bi bi-pencil-square me-1"></i> Editar Saldo Manual</a>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="LoadSaldo"><i class="bi bi-arrow-clockwise me-1"></i> Refrescar</button>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="LoadSaldo" disabled="@isLoadingSaldo"><i class="bi bi-arrow-clockwise me-1"></i> Refrescar</button>
             </div>
         </div>
     </div>
 }
-else 
+else
 {
     <div class="alert alert-warning" role="alert">
         <i class="bi bi-info-circle-fill me-2"></i>
-        No hay información de saldo principal disponible.
-        Asegúrate de que el sistema haya inicializado un saldo (esto puede ocurrir con el primer ingreso o a través del SeedDB de la API).
-        Si el problema persiste, contacta al administrador.
+        No hay información de saldo principal disponible para tu usuario.
+        Este saldo se crea automáticamente al registrarte o con tu primera transacción.
+        Si eres un nuevo usuario, intenta registrar un ingreso o egreso.
     </div>
 }
 
 @code {
     private Saldo? saldoActual;
     private bool errorAlCargar = false;
-    private bool isLoadingSaldo = true; 
+    private bool isLoadingSaldo = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,27 +104,42 @@ else
         isLoadingSaldo = true;
         saldoActual = null;
         errorAlCargar = false;
-        StateHasChanged(); 
+        StateHasChanged();
 
-        var responseHttp = await repository.GetAsync<Saldo>("/api/Saldo/actual"); 
+        try
+        {
+            var responseHttp = await repository.GetAsync<Saldo>("/api/Saldo/actual");
 
-        if (responseHttp.Error)
-        {
-            errorAlCargar = true;
-            var mensajeError = await responseHttp.GetErrorMessageAsync();
-            Console.WriteLine($"Error cargando saldo: {mensajeError}. Código HTTP: {responseHttp.HttpResponseMessage.StatusCode}");
-        }
-        else
-        {
-            saldoActual = responseHttp.Response;
-            if (saldoActual == null)
+            if (responseHttp.Error)
             {
-              
-                Console.WriteLine("El saldo fue cargado como null desde la API a pesar de no haber error HTTP (o el error no fue capturado como tal).");
-             
+                errorAlCargar = true;
+                var mensajeError = await responseHttp.GetErrorMessageAsync();
+                Console.WriteLine($"Error cargando saldo: {mensajeError}. Código HTTP: {responseHttp.HttpResponseMessage.StatusCode}");
+                if (responseHttp.HttpResponseMessage.StatusCode != System.Net.HttpStatusCode.NotFound)
+                {
+                    await Swal.FireAsync("Error", $"No se pudo cargar el saldo: {mensajeError}", SweetAlertIcon.Error);
+                }
+            }
+            else
+            {
+                saldoActual = responseHttp.Response;
             }
         }
-        isLoadingSaldo = false;
-        StateHasChanged();
+        catch (AccessTokenNotAvailableException exception)
+        {
+            errorAlCargar = true;
+            exception.Redirect();
+        }
+        catch (Exception ex)
+        {
+            errorAlCargar = true;
+            Console.WriteLine($"Error inesperado cargando saldo: {ex.Message}");
+            await Swal.FireAsync("Error", "Ocurrió un error inesperado al cargar el saldo.", SweetAlertIcon.Error);
+        }
+        finally
+        {
+            isLoadingSaldo = false;
+            StateHasChanged();
+        }
     }
 }

@@ -1,12 +1,12 @@
 ﻿@using Spendnt.Shared.Entities
-@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
 
 <EditForm Model="Ingresos" OnSubmit="OnSubmit">
     <DataAnnotationsValidator />
-    <ValidationSummary />
+    @* <ValidationSummary /> *@
 
     <div class="mb-3">
-        <label class="form-label">Ingreso</label>
+        <label class="form-label">Monto del Ingreso</label>
         <div>
             <InputNumber class="form-control" @bind-Value="Ingresos.Ingreso" />
             <ValidationMessage For="@(() => Ingresos.Ingreso)" />
@@ -21,23 +21,26 @@
         </div>
     </div>
 
-
-<div class="mb-3">
-    <label class="form-label">Categoría</label>
-    <div>
-        <InputSelect class="form-control" @bind-Value="Ingresos.CategoriaId">
-            <option value="0">-- Seleccione una categoría --</option>
-            @if (Categorias != null)
+    <div class="mb-3">
+        <label class="form-label">Categoría</label>
+        <div>
+            @if (Categorias == null || !Categorias.Any())
             {
-                @foreach (var categoria in Categorias)
-                {
-                    <option value="@categoria.Id">@categoria.Nombre</option> 
-                }
+                <p><em>Cargando categorías...</em></p>
             }
-        </InputSelect>
-        <ValidationMessage For="@(() => Ingresos.CategoriaId)" />
+            else
+            {
+                <InputSelect class="form-control" @bind-Value="Ingresos.CategoriaId">
+                    <option value="0">-- Seleccione una categoría --</option>
+                    @foreach (var categoria in Categorias)
+                    {
+                        <option value="@categoria.Id">@categoria.Nombre</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => Ingresos.CategoriaId)" />
+            }
+        </div>
     </div>
-</div>
 
     <button class="btn btn-primary" type="submit">Guardar</button>
     <button class="btn btn-success" type="button" @onclick="ReturnAction">Regresar</button>
@@ -46,10 +49,10 @@
 @code {
     [EditorRequired]
     [Parameter]
-    public Ingresos Ingresos { get; set; }
+    public Ingresos Ingresos { get; set; } = new();
 
     [Parameter]
-    public List<Categoria> Categorias { get; set; } = new();
+    public List<Categoria>? Categorias { get; set; }
 
     [EditorRequired]
     [Parameter]
@@ -58,4 +61,12 @@
     [EditorRequired]
     [Parameter]
     public EventCallback ReturnAction { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Ingresos != null && Ingresos.Fecha == DateTime.MinValue)
+        {
+            Ingresos.Fecha = DateTime.Today;
+        }
+    }
 }

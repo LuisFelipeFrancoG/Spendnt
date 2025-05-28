@@ -1,9 +1,12 @@
 ﻿@page "/Egresos"
+@attribute [Authorize]
+
 @using CurrieTechnologies.Razor.SweetAlert2
 @using Spendnt.Shared.Entities
 @using Spendnt.WEB.Repositories
-@using Spendnt.WEB.Shared 
-@using Microsoft.AspNetCore.Authorization 
+@using Spendnt.WEB.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @inject IRepository repository
 @inject NavigationManager navigationManager
@@ -17,7 +20,7 @@
 
 <GenericList MyList="listaEgresos">
     <Loading>
-        <div class="d-flex justify-content-center">
+        <div class="d-flex justify-content-center my-3">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Cargando egresos...</span>
             </div>
@@ -34,6 +37,7 @@
                 <tr>
                     <th>Monto</th>
                     <th>Fecha</th>
+                    <th>Categoría</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -43,7 +47,7 @@
                     <tr>
                         <td>@egresoItem.Egreso.ToString("C")</td>
                         <td>@egresoItem.Fecha.ToString("dd/MM/yyyy")</td>
-                        
+                        <td>@egresoItem.Categoria?.Nombre</td>
                         <td>
                             <a href="/Egresos/edit/@egresoItem.Id" class="btn btn-warning btn-sm me-1" title="Editar"><i class="bi bi-pencil-square"></i></a>
                             <button class="btn btn-danger btn-sm" @onclick=@(() => DeleteAsync(egresoItem)) title="Borrar"><i class="bi bi-trash3-fill"></i></button>
@@ -56,7 +60,9 @@
 </GenericList>
 
 @code {
-    private List<Egresos> listaEgresos;
+    private List<Egresos>? listaEgresos;
+    private bool isLoading = true;
+    private bool loadFailed = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -65,32 +71,56 @@
 
     private async Task LoadEgresos()
     {
-        var responseHttp = await repository.GetAsync<List<Egresos>>("/api/Egresos");
-        if (responseHttp.Error)
+        isLoading = true;
+        loadFailed = false;
+        StateHasChanged();
+
+        try
         {
-            var mensajeError = await responseHttp.GetErrorMessageAsync();
-            await swal.FireAsync("Error", $"No se pudieron cargar los egresos: {mensajeError}", SweetAlertIcon.Error);
+            var responseHttp = await repository.GetAsync<List<Egresos>>("/api/Egresos");
+            if (responseHttp.Error)
+            {
+                loadFailed = true;
+                var mensajeError = await responseHttp.GetErrorMessageAsync();
+                await swal.FireAsync("Error", $"No se pudieron cargar los egresos: {mensajeError}", SweetAlertIcon.Error);
+                listaEgresos = new List<Egresos>();
+            }
+            else
+            {
+                listaEgresos = responseHttp.Response ?? new List<Egresos>();
+            }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            loadFailed = true;
+            exception.Redirect();
+        }
+        catch (Exception ex)
+        {
+            loadFailed = true;
+            await swal.FireAsync("Error", $"Error inesperado al cargar egresos: {ex.Message}", SweetAlertIcon.Error);
             listaEgresos = new List<Egresos>();
         }
-        else
+        finally
         {
-            listaEgresos = responseHttp.Response ?? new List<Egresos>();
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
     private async Task DeleteAsync(Egresos egresoParaBorrar)
     {
         var result = await swal.FireAsync(new SweetAlertOptions
-        {
-            Title = "Confirmación",
-            Text = $"¿Estás seguro de que quieres borrar el egreso de {egresoParaBorrar.Egreso:C} del {egresoParaBorrar.Fecha:dd/MM/yyyy}?",
-            Icon = SweetAlertIcon.Warning,
-            ShowCancelButton = true,
-            ConfirmButtonText = "Sí, borrar",
-            CancelButtonText = "Cancelar"
-        });
+            {
+                Title = "Confirmación",
+                Text = $"¿Estás seguro de que quieres borrar el egreso de {egresoParaBorrar.Egreso:C} del {egresoParaBorrar.Fecha:dd/MM/yyyy}?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, borrar",
+                CancelButtonText = "Cancelar"
+            });
 
-        if (result.Value == null && !result.IsConfirmed)
+        if (!result.IsConfirmed) // Simplificado: si no se confirma, retorna.
         {
             return;
         }

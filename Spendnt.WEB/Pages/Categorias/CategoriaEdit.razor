@@ -1,14 +1,22 @@
 ﻿@page "/categorias/edit/{Id:int}"
+@attribute [Authorize(Roles = "Admin")] 
+
 @using Spendnt.Shared.Entities
+@using Microsoft.AspNetCore.Authorization
 @inject HttpClient Http
-@inject NavigationManager Navigation
-@inject IJSRuntime JS
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS 
+@inject CurrieTechnologies.Razor.SweetAlert2.SweetAlertService Swal
 
 <h3>Editar Categoría</h3>
 
-@if (categoria == null)
+@if (categoria == null && !isLoadingError)
 {
     <p><em>Cargando...</em></p>
+}
+else if (isLoadingError)
+{
+    <div class="alert alert-danger">No se pudo cargar la categoría para editar.</div>
 }
 else
 {
@@ -19,15 +27,35 @@ else
     [Parameter] public int Id { get; set; }
 
     private Categoria? categoria;
+    private bool isLoadingError = false;
 
     protected override async Task OnInitializedAsync()
     {
-        categoria = await Http.GetFromJsonAsync<Categoria>($"api/categorias/{Id}");
+        try
+        {
+            categoria = await Http.GetFromJsonAsync<Categoria>($"api/categorias/{Id}");
+        }
+        catch (Exception ex) 
+        {
+            isLoadingError = true;
+            Console.WriteLine($"Error cargando categoría para editar: {ex.Message}");
+           
+        }
     }
 
     private async Task Guardar()
     {
-        await Http.PutAsJsonAsync("api/categorias", categoria!);
-        Navigation.NavigateTo("/categorias");
+        if (categoria == null) return;
+
+        var response = await Http.PutAsJsonAsync($"api/categorias/{categoria.Id}", categoria); 
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/categorias");
+        }
+        else
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            await Swal.FireAsync("Error", $"No se pudo actualizar la categoría: {errorContent}", "error");
+        }
     }
 }
